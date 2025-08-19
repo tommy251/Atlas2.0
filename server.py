@@ -11,12 +11,13 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
 import json
-
-# Password hashing
+import csv
 from passlib.context import CryptContext
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 from datetime import datetime, timedelta
 import jwt
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Custom JSON encoder for MongoDB ObjectId
 class JSONEncoder(json.JSONEncoder):
@@ -30,9 +31,9 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.getenv('DB_NAME', 'atlas2')]
 
 # Pydantic Models
 class Product(BaseModel):
@@ -40,6 +41,7 @@ class Product(BaseModel):
     name: str
     price: float
     image_url: str
+    best_price: bool = False  # Added for price competitiveness
     images: List[str] = []
     description: str
     category: str
@@ -78,13 +80,53 @@ class ContactForm(BaseModel):
     email: str
     message: str
 
-# Initialize database (no hardcoded data, relies on import_products.py)
+# Initialize database
 async def init_db():
-    # Optionally clear existing products if needed
+    # Clear existing products
     await db.products.delete_many({})
-    logger.info("Database initialized or cleared")
+    logger.info("Existing products cleared")
 
-# Create api_router before routes
+    # Load products from CSV if available
+    csv_path = ROOT_DIR / 'products.csv'
+    if csv_path.exists():
+        try:
+            with open(csv_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                products = []
+                for row in reader:
+                    colors = row.get('colors', '').split(';') if row.get('colors') else []
+                    storage = row.get('storage', '').split(';') if row.get('storage') else []
+                    specs = {}
+                    if row.get('specs') and row['specs'].strip():
+                        try:
+                            specs = json.loads(row['specs'])
+                        except json.JSONDecodeError as e:
+                            logger.error(f"Invalid JSON in specs: {str(e)}")
+                            specs = {}
+                    
+                    product = {
+                        "id": row.get('id', str(ObjectId())),
+                        "name": row.get('name', ''),
+                        "price": float(row['price'].replace(',', '')) if row.get('price') else 0.0,
+                        "image_url": row.get('image_url', ''),
+                        "best_price": row.get('best_price', 'false').lower() == 'true',
+                        "images": [row['image_url']] if row.get('image_url') else [],
+                        "description": row.get('description', ''),
+                        "category": row.get('category', ''),
+                        "colors": colors,
+                        "storage": storage,
+                        "specs": specs
+                    }
+                    products.append(product)
+                if products:
+                    await db.products.insert_many(products)
+                    logger.info(f"Inserted {len(products)} products from CSV")
+        except Exception as e:
+            logger.error(f"Error loading products from CSV: {str(e)}")
+    else:
+        logger.info("No products.csv found, skipping product import")
+
+# Create api_router
 api_router = APIRouter(prefix="/api")
 
 # Routes
@@ -97,12 +139,56 @@ async def initialize_database():
     await init_db()
     return {"message": "Database initialized successfully"}
 
+@api_router.post("/import-products")
+async def import_products():
+    csv_path = ROOT_DIR / 'products.csv'
+    if not csv_path.exists():
+        raise HTTPException(status_code=400, detail="products.csv not found")
+    
+    try:
+        await db.products.delete_many({})
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            products = []
+            for row in reader:
+                colors = row.get('colors', '').split(';') if row.get('colors') else []
+                storage = row.get('storage', '').split(';') if row.get('storage') else []
+                specs = {}
+                if row.get('specs') and row['specs'].strip():
+                    try:
+                        specs = json.loads(row['specs'])
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Invalid JSON in specs: {str(e)}")
+                        specs = {}
+                
+                product = {
+                    "id": row.get('id', str(ObjectId())),
+                    "name": row.get('name', ''),
+                    "price": float(row['price'].replace(',', '')) if row.get('price') else 0.0,
+                    "image_url": row.get('image_url', ''),
+                    "best_price": row.get('best_price', 'false').lower() == 'true',
+                    "images": [row['image_url']] if row.get('image_url') else [],
+                    "description": row.get('description', ''),
+                    "category": row.get('category', ''),
+                    "colors": colors,
+                    "storage": storage,
+                    "specs": specs
+                }
+                products.append(product)
+            if products:
+                await db.products.insert_many(products)
+                logger.info(f"Imported {len(products)} products from CSV")
+                return {"success": True, "message": f"Imported {len(products)} products"}
+            else:
+                return {"success": False, "message": "No products found in CSV"}
+    except Exception as e:
+        logger.error(f"Error importing products: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error importing products: {str(e)}")
+
 @api_router.get("/products")
 async def get_products(category: Optional[str] = None):
-    if category:
-        products = await db.products.find({"category": category}).to_list(1000)
-    else:
-        products = await db.products.find().to_list(1000)
+    query = {"category": category} if category else {}
+    products = await db.products.find(query).to_list(1000)
     for product in products:
         if "_id" in product:
             product["_id"] = str(product["_id"])
@@ -253,7 +339,7 @@ async def login(user: UserLogin):
         token = jwt.encode({
             "sub": user.username,
             "exp": datetime.utcnow() + timedelta(hours=24)
-        }, os.environ.get("SECRET_KEY", "your-secret-key"), algorithm="HS256")
+        }, os.getenv("SECRET_KEY", "your-secret-key"), algorithm="HS256")
         return {"success": True, "message": "Login successful", "token": token, "user": user.username}
     else:
         return {"success": False, "message": "Invalid credentials"}
@@ -289,14 +375,14 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
 
-# Include api_router after routes
+# Include api_router
 app.include_router(api_router)
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["*"],
+    allow_origins=[os.getenv("FRONTEND_URL", "*")],
     allow_methods=["*"],
     allow_headers=["*"],
 )

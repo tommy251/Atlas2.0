@@ -176,16 +176,29 @@ const Home = () => {
 
 const ProductCard = ({ product }) => {
   const { addToCart, addToWishlist } = useApp();
+  const [imageError, setImageError] = useState(false);
 
   return (
-    <div className="product-card">
+    <div className="product-card relative">
       <Link to={`/product/${product.id}`}>
-        <div className="image-placeholder">
-          <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <rect x="50" y="20" width="100" height="160" rx="15" fill="#ddd" stroke="#aaa"/>
-            <circle cx="100" cy="170" r="5" fill="#aaa"/>
-            <text x="100" y="100" text-anchor="middle" fill="#888">AI Illustration: {product.name}</text>
-          </svg>
+        <div className="relative w-full h-48 mb-4">
+          {!imageError ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-contain rounded-lg"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-700 flex items-center justify-center rounded-lg">
+              <span className="text-gray-400">Image not available</span>
+            </div>
+          )}
+          {product.best_price && (
+            <span className="absolute top-2 right-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
+              Best Price
+            </span>
+          )}
         </div>
       </Link>
       <div>
@@ -196,7 +209,7 @@ const ProductCard = ({ product }) => {
         <div className="flex space-x-2 justify-center">
           <button
             onClick={() => addToCart(product.id, product.price)}
-            className="px-4 py-2"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Add to Cart
           </button>
@@ -326,6 +339,7 @@ const ProductDetail = () => {
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedStorage, setSelectedStorage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
   const { addToCart, addToWishlist } = useApp();
 
   useEffect(() => {
@@ -364,18 +378,32 @@ const ProductDetail = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
-            <div className="image-placeholder">
-              <svg width="100%" height="300" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="50" y="20" width="100" height="160" rx="15" fill="#ddd" stroke="#aaa"/>
-                <circle cx="100" cy="170" r="5" fill="#aaa"/>
-                <text x="100" y="100" text-anchor="middle" fill="#888">AI Illustration: {product.name}</text>
-              </svg>
+            <div className="relative w-full h-96">
+              {!imageError ? (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-full object-contain rounded-lg"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-700 flex items-center justify-center rounded-lg">
+                  <span className="text-gray-400">Image not available</span>
+                </div>
+              )}
             </div>
           </div>
 
           <div className="text-white">
             <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-            <p className="text-2xl font-bold text-blue-400 mb-6">₦{product.price.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-blue-400 mb-6">
+              ₦{product.price.toLocaleString()}
+              {product.best_price && (
+                <span className="ml-4 bg-green-600 text-white text-sm font-semibold px-2 py-1 rounded-full">
+                  Best Price
+                </span>
+              )}
+            </p>
             <p className="text-gray-300 mb-8">{product.description}</p>
 
             {product.colors.length > 0 && (
@@ -546,12 +574,15 @@ const Cart = () => {
                     <tr key={index} className="border-b border-gray-600">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="image-placeholder w-12 h-12">
-                            <svg width="100%" height="100%" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                              <rect x="50" y="20" width="100" height="160" rx="15" fill="#ddd" stroke="#aaa"/>
-                              <circle cx="100" cy="170" r="5" fill="#aaa"/>
-                              <text x="100" y="100" text-anchor="middle" fill="#888">AI: {item.item_name}</text>
-                            </svg>
+                          <div className="w-12 h-12">
+                            <img
+                              src={item.image_url}
+                              alt={item.item_name}
+                              className="w-full h-full object-contain rounded"
+                              onError={(e) => {
+                                e.target.src = '/images/placeholder.png';
+                              }}
+                            />
                           </div>
                           <span className="text-white ml-3">{item.item_name}</span>
                         </div>
@@ -663,12 +694,20 @@ const Wishlist = () => {
             {wishlistItems.map((item) => (
               <div key={item.item_id} className="product-card">
                 <Link to={`/product/${item.item_id}`}>
-                  <div className="image-placeholder">
-                    <svg width="100%" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="50" y="20" width="100" height="160" rx="15" fill="#ddd" stroke="#aaa"/>
-                      <circle cx="100" cy="170" r="5" fill="#aaa"/>
-                      <text x="100" y="100" text-anchor="middle" fill="#888">AI: {item.item_name}</text>
-                    </svg>
+                  <div className="relative w-full h-48 mb-4">
+                    <img
+                      src={item.image_url}
+                      alt={item.item_name}
+                      className="w-full h-full object-contain rounded-lg"
+                      onError={(e) => {
+                        e.target.src = '/images/placeholder.png';
+                      }}
+                    />
+                    {item.best_price && (
+                      <span className="absolute top-2 right-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                        Best Price
+                      </span>
+                    )}
                   </div>
                 </Link>
                 <div>
