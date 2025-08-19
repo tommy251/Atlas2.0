@@ -30,7 +30,7 @@ const Header = () => {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-blue-400 hover:text-blue-300 transition-colors">
-            Atlantis Technologies
+            Atlas2.0
           </Link>
 
           <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
@@ -127,38 +127,25 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div 
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: 'url',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        >
-          <div className="absolute inset-0 bg-black/70"></div>
-        </div>
-        
-        <div className="relative z-10 text-center text-white px-4">
-          <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-            Atlantis Technologies
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 text-gray-300">
-            Experience the future of innovation with cutting-edge phones, laptops, and accessories
+      <section className="hero-bg pt-20 pb-12 flex items-center justify-center">
+        <div className="text-center text-white px-4">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">Atlas2.0</h1>
+          <p className="text-lg md:text-xl mb-6 text-gray-300">
+            Discover quality phones and accessories in Nigeria
           </p>
           <button
             onClick={() => navigate('/shop')}
-            className="px-8 py-4 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
           >
             Shop Now
           </button>
         </div>
       </section>
 
-      <section className="py-20 bg-gray-900">
+      <section className="py-12 bg-gray-900">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12 text-white">Featured Products</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <h2 className="text-3xl font-bold text-center mb-8 text-white">Featured Products</h2>
+          <div className="grid-responsive">
             {featuredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -166,17 +153,17 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="py-20 bg-black">
+      <section className="py-12 bg-black">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12 text-white">Shop by Category</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {['Brand New Phones', 'Laptops', 'Accessories', 'Pre Own (UK Used)'].map((category) => (
+          <h2 className="text-3xl font-bold text-center mb-8 text-white">Shop by Category</h2>
+          <div className="grid-responsive">
+            {['Phones', 'Accessories', 'Pre-Owned'].map((category) => (
               <div
                 key={category}
                 onClick={() => navigate(`/shop?category=${encodeURIComponent(category)}`)}
                 className="bg-gray-800 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-700 transition-colors"
               >
-                <h3 className="text-xl font-semibold text-white mb-2">{category}</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">{category}</h3>
                 <p className="text-gray-400">Explore our {category.toLowerCase()} collection</p>
               </div>
             ))}
@@ -191,35 +178,34 @@ const ProductCard = ({ product }) => {
   const { addToCart, addToWishlist } = useApp();
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300 border border-gray-700">
+    <div className="product-card">
       <Link to={`/product/${product.id}`}>
-        <img
-          src={product.image_url}
-          alt={product.name}
-          className="w-full h-48 object-cover"
-        />
+        <div className="image-placeholder">
+          <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <rect x="50" y="20" width="100" height="160" rx="15" fill="#ddd" stroke="#aaa"/>
+            <circle cx="100" cy="170" r="5" fill="#aaa"/>
+            <text x="100" y="100" text-anchor="middle" fill="#888">AI Illustration: {product.name}</text>
+          </svg>
+        </div>
       </Link>
-      <div className="p-6">
+      <div>
         <Link to={`/product/${product.id}`}>
-          <h3 className="text-xl font-semibold text-white mb-2 hover:text-blue-400">{product.name}</h3>
+          <h3 className="hover:text-blue-400">{product.name}</h3>
         </Link>
-        <p className="text-gray-400 mb-4">{product.description}</p>
-        <div className="flex justify-between items-center">
-          <span className="text-2xl font-bold text-blue-400">₦{product.price.toLocaleString()}</span>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => addToCart(product.id, product.price)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Add to Cart
-            </button>
-            <button
-              onClick={() => addToWishlist(product.id)}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              ❤️
-            </button>
-          </div>
+        <p className="price">₦{product.price.toLocaleString()}</p>
+        <div className="flex space-x-2 justify-center">
+          <button
+            onClick={() => addToCart(product.id, product.price)}
+            className="px-4 py-2"
+          >
+            Add to Cart
+          </button>
+          <button
+            onClick={() => addToWishlist(product.id)}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            ❤️
+          </button>
         </div>
       </div>
     </div>
@@ -315,7 +301,7 @@ const Shop = () => {
           </div>
 
           <div className="lg:w-3/4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid-responsive">
               {filteredProducts.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -378,11 +364,13 @@ const ProductDetail = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="w-full h-96 object-cover rounded-lg bg-gray-800 p-4"
-            />
+            <div className="image-placeholder">
+              <svg width="100%" height="300" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <rect x="50" y="20" width="100" height="160" rx="15" fill="#ddd" stroke="#aaa"/>
+                <circle cx="100" cy="170" r="5" fill="#aaa"/>
+                <text x="100" y="100" text-anchor="middle" fill="#888">AI Illustration: {product.name}</text>
+              </svg>
+            </div>
           </div>
 
           <div className="text-white">
@@ -452,7 +440,7 @@ const ProductDetail = () => {
         {relatedProducts.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl font-bold text-white mb-8">Related Products</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid-responsive">
               {relatedProducts.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -558,8 +546,14 @@ const Cart = () => {
                     <tr key={index} className="border-b border-gray-600">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <img src={item.image_url} alt={item.item_name} className="w-12 h-12 object-cover rounded mr-3" />
-                          <span className="text-white">{item.item_name}</span>
+                          <div className="image-placeholder w-12 h-12">
+                            <svg width="100%" height="100%" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                              <rect x="50" y="20" width="100" height="160" rx="15" fill="#ddd" stroke="#aaa"/>
+                              <circle cx="100" cy="170" r="5" fill="#aaa"/>
+                              <text x="100" y="100" text-anchor="middle" fill="#888">AI: {item.item_name}</text>
+                            </svg>
+                          </div>
+                          <span className="text-white ml-3">{item.item_name}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-gray-300">{item.color || 'N/A'}</td>
@@ -630,12 +624,15 @@ const Wishlist = () => {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('user') || 'anonymous';
-      await axios.delete(`${API}/wishlist/remove`, {
+      const response = await axios.delete(`${API}/wishlist/remove`, {
         data: { user_id: userId, item_id: itemId },
         headers: { Authorization: `Bearer ${token || ''}` }
       });
-      await fetchWishlist();
-      updateWishlistCount();
+      
+      if (response.data.success) {
+        await fetchWishlist();
+        updateWishlistCount();
+      }
     } catch (error) {
       console.error('Error removing from wishlist:', error);
     }
@@ -662,17 +659,23 @@ const Wishlist = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid-responsive">
             {wishlistItems.map((item) => (
-              <div key={item.item_id} className="bg-gray-800 rounded-lg overflow-hidden">
+              <div key={item.item_id} className="product-card">
                 <Link to={`/product/${item.item_id}`}>
-                  <img src={item.image_url} alt={item.item_name} className="w-full h-48 object-cover" />
+                  <div className="image-placeholder">
+                    <svg width="100%" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="50" y="20" width="100" height="160" rx="15" fill="#ddd" stroke="#aaa"/>
+                      <circle cx="100" cy="170" r="5" fill="#aaa"/>
+                      <text x="100" y="100" text-anchor="middle" fill="#888">AI: {item.item_name}</text>
+                    </svg>
+                  </div>
                 </Link>
-                <div className="p-6">
+                <div>
                   <Link to={`/product/${item.item_id}`}>
-                    <h3 className="text-xl font-semibold text-white mb-2 hover:text-blue-400">{item.item_name}</h3>
+                    <h3 className="hover:text-blue-400">{item.item_name}</h3>
                   </Link>
-                  <p className="text-2xl font-bold text-blue-400 mb-4">₦{item.price.toLocaleString()}</p>
+                  <p className="price">₦{item.price.toLocaleString()}</p>
                   <button
                     onClick={() => removeFromWishlist(item.item_id)}
                     className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -735,7 +738,7 @@ const Search = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid-responsive">
             {searchResults.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -750,18 +753,18 @@ const About = () => {
   return (
     <div className="min-h-screen bg-gray-900 pt-20">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-white mb-8">About Atlantis Technologies</h1>
+        <h1 className="text-4xl font-bold text-white mb-8">About Atlas2.0</h1>
         <div className="bg-gray-800 rounded-lg p-8">
           <p className="text-gray-300 text-lg mb-6">
-            Welcome to Atlantis Technologies, your premier destination for cutting-edge phones, laptops, and accessories. 
-            We specialize in bringing you the latest technology at competitive prices.
+            Welcome to Atlas2.0, your trusted source for quality phones and accessories in Nigeria. 
+            We bring you the best in technology at affordable prices.
           </p>
           <p className="text-gray-300 text-lg mb-6">
-            Our mission is to provide high-quality electronics that enhance your digital lifestyle. From brand new devices 
-            to carefully selected pre-owned items, we ensure every product meets our strict quality standards.
+            Our mission is to deliver reliable electronics tailored for the Nigerian market, from brand-new devices 
+            to carefully selected pre-owned options, all backed by our commitment to quality.
           </p>
           <p className="text-gray-300 text-lg">
-            Experience the future of technology with Atlantis Technologies - where innovation meets affordability.
+            Shop with confidence at Atlas2.0 - where innovation meets value.
           </p>
         </div>
       </div>
@@ -957,7 +960,7 @@ const Footer = () => {
   return (
     <footer className="bg-black text-gray-400 py-8">
       <div className="container mx-auto px-4 text-center">
-        <p>© 2025 Atlantis Technologies. All rights reserved.</p>
+        <p>© 2025 Atlas2.0. All rights reserved.</p>
       </div>
     </footer>
   );
@@ -967,6 +970,7 @@ const AppProvider = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [user, setUser] = useState(localStorage.getItem('user') || null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
