@@ -129,6 +129,10 @@ app = FastAPI(lifespan=lifespan)
 api_router = APIRouter(prefix="/api")
 
 # Routes
+@app.get("/")
+async def root_redirect():
+    return {"message": "Welcome to Atlantis Technologies API. Use /api/ for endpoints."}
+
 @api_router.get("/")
 async def root():
     return {"message": "Atlantis Technologies API (MongoDB removed)"}
