@@ -1,17 +1,15 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request
+from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 from contextlib import asynccontextmanager
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
-from bson import ObjectId
-import json
 import csv
+from pydantic import BaseModel
+from typing import List, Optional, Dict
+import json
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import jwt
@@ -19,21 +17,9 @@ import jwt
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Custom JSON encoder for MongoDB ObjectId
-class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, ObjectId):
-            return str(o)
-        return super().default(o)
-
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
-
-# MongoDB connection
-mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.getenv('DB_NAME', 'atlas2')]
 
 # Pydantic Models
 class Product(BaseModel):
@@ -41,7 +27,7 @@ class Product(BaseModel):
     name: str
     price: float
     image_url: str
-    best_price: bool = False  # Added for price competitiveness
+    best_price: bool = False
     images: List[str] = []
     description: str
     category: str
@@ -80,13 +66,16 @@ class ContactForm(BaseModel):
     email: str
     message: str
 
-# Initialize database
-async def init_db():
-    # Clear existing products
-    await db.products.delete_many({})
-    logger.info("Existing products cleared")
+# In-memory storage
+products_data = []
+cart_data = {}
+wishlist_data = {}
+users_data = {}
+contact_forms_data = []
 
-    # Load products from CSV if available
+# Load products from CSV
+def load_products():
+    global products_data
     csv_path = ROOT_DIR / 'products.csv'
     if csv_path.exists():
         try:
@@ -104,27 +93,37 @@ async def init_db():
                             logger.error(f"Invalid JSON in specs: {str(e)}")
                             specs = {}
                     
-                    product = {
-                        "id": row.get('id', str(ObjectId())),
-                        "name": row.get('name', ''),
-                        "price": float(row['price'].replace(',', '')) if row.get('price') else 0.0,
-                        "image_url": row.get('image_url', ''),
-                        "best_price": row.get('best_price', 'false').lower() == 'true',
-                        "images": [row['image_url']] if row.get('image_url') else [],
-                        "description": row.get('description', ''),
-                        "category": row.get('category', ''),
-                        "colors": colors,
-                        "storage": storage,
-                        "specs": specs
-                    }
-                    products.append(product)
-                if products:
-                    await db.products.insert_many(products)
-                    logger.info(f"Inserted {len(products)} products from CSV")
+                    product = Product(
+                        id=row.get('id', ''),
+                        name=row.get('name', ''),
+                        price=float(row['price'].replace(',', '')) if row.get('price') else 0.0,
+                        image_url=row.get('image_url', ''),
+                        best_price=row.get('best_price', 'false').lower() == 'true',
+                        images=[row['image_url']] if row.get('image_url') else [],
+                        description=row.get('description', ''),
+                        category=row.get('category', ''),
+                        colors=colors,
+                        storage=storage,
+                        specs=specs
+                    )
+                    products.append(product.dict())
+                products_data = products
+                logger.info(f"Loaded {len(products_data)} products from CSV")
         except Exception as e:
             logger.error(f"Error loading products from CSV: {str(e)}")
     else:
         logger.info("No products.csv found, skipping product import")
+
+# Initialize data
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_products()
+    logger.info("Data initialized")
+    yield
+    logger.info("Application shutdown")
+
+# Create FastAPI app with lifespan
+app = FastAPI(lifespan=lifespan)
 
 # Create api_router
 api_router = APIRouter(prefix="/api")
@@ -132,209 +131,105 @@ api_router = APIRouter(prefix="/api")
 # Routes
 @api_router.get("/")
 async def root():
-    return {"message": "Atlantis Technologies API"}
+    return {"message": "Atlantis Technologies API (MongoDB removed)"}
 
 @api_router.post("/init-db")
 async def initialize_database():
-    await init_db()
-    return {"message": "Database initialized successfully"}
-
-@api_router.post("/import-products")
-async def import_products():
-    csv_path = ROOT_DIR / 'products.csv'
-    if not csv_path.exists():
-        raise HTTPException(status_code=400, detail="products.csv not found")
-    
-    try:
-        await db.products.delete_many({})
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            products = []
-            for row in reader:
-                colors = row.get('colors', '').split(';') if row.get('colors') else []
-                storage = row.get('storage', '').split(';') if row.get('storage') else []
-                specs = {}
-                if row.get('specs') and row['specs'].strip():
-                    try:
-                        specs = json.loads(row['specs'])
-                    except json.JSONDecodeError as e:
-                        logger.error(f"Invalid JSON in specs: {str(e)}")
-                        specs = {}
-                
-                product = {
-                    "id": row.get('id', str(ObjectId())),
-                    "name": row.get('name', ''),
-                    "price": float(row['price'].replace(',', '')) if row.get('price') else 0.0,
-                    "image_url": row.get('image_url', ''),
-                    "best_price": row.get('best_price', 'false').lower() == 'true',
-                    "images": [row['image_url']] if row.get('image_url') else [],
-                    "description": row.get('description', ''),
-                    "category": row.get('category', ''),
-                    "colors": colors,
-                    "storage": storage,
-                    "specs": specs
-                }
-                products.append(product)
-            if products:
-                await db.products.insert_many(products)
-                logger.info(f"Imported {len(products)} products from CSV")
-                return {"success": True, "message": f"Imported {len(products)} products"}
-            else:
-                return {"success": False, "message": "No products found in CSV"}
-    except Exception as e:
-        logger.error(f"Error importing products: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error importing products: {str(e)}")
+    load_products()
+    return {"message": "Data initialized from products.csv"}
 
 @api_router.get("/products")
 async def get_products(category: Optional[str] = None):
-    query = {"category": category} if category else {}
-    products = await db.products.find(query).to_list(1000)
-    for product in products:
-        if "_id" in product:
-            product["_id"] = str(product["_id"])
-    return {"products": products}
+    if category:
+        return {"products": [p for p in products_data if p.get("category") == category]}
+    return {"products": products_data}
 
 @api_router.get("/products/{product_id}")
 async def get_product(product_id: str):
-    product = await db.products.find_one({"id": product_id})
+    product = next((p for p in products_data if p.get("id") == product_id), None)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    if "_id" in product:
-        product["_id"] = str(product["_id"])
     return product
 
 @api_router.get("/categories")
 async def get_categories():
-    categories = await db.products.distinct("category")
-    return categories
+    return list(set(p.get("category") for p in products_data if p.get("category")))
 
 @api_router.get("/search")
 async def search_products(q: str):
-    products = await db.products.find({
-        "$or": [
-            {"name": {"$regex": q, "$options": "i"}},
-            {"category": {"$regex": q, "$options": "i"}},
-            {"description": {"$regex": q, "$options": "i"}}
+    return {
+        "products": [
+            p for p in products_data
+            if q.lower() in p.get("name", "").lower() or q.lower() in p.get("category", "").lower() or q.lower() in p.get("description", "").lower()
         ]
-    }).to_list(1000)
-    for product in products:
-        if "_id" in product:
-            product["_id"] = str(product["_id"])
-    return products
+    }
 
 @api_router.post("/cart/add")
 async def add_to_cart(item: CartItem):
-    existing = await db.cart.find_one({
-        "user_id": item.user_id,
-        "item_id": item.item_id,
-        "color": item.color,
-        "storage": item.storage
-    })
-    if existing:
-        await db.cart.update_one(
-            {"_id": existing["_id"]},
-            {"$inc": {"quantity": 1}}
-        )
+    key = (item.user_id, item.item_id, item.color, item.storage)
+    if key in cart_data:
+        cart_data[key]["quantity"] += 1
     else:
-        await db.cart.insert_one(item.dict())
-    cart_items = await db.cart.find({"user_id": item.user_id}).to_list(1000)
+        cart_data[key] = item.dict()
+    cart_items = [cart_data[k] for k in cart_data if k[0] == item.user_id]
     cart_count = sum(item["quantity"] for item in cart_items)
     total = sum(item["price"] * item["quantity"] for item in cart_items)
     return {"success": True, "cart_count": cart_count, "total": total}
 
 @api_router.put("/cart/update")
 async def update_cart(item: CartItem):
+    key = (item.user_id, item.item_id, item.color, item.storage)
     if item.quantity <= 0:
-        await db.cart.delete_one({
-            "user_id": item.user_id,
-            "item_id": item.item_id,
-            "color": item.color,
-            "storage": item.storage
-        })
+        cart_data.pop(key, None)
     else:
-        await db.cart.update_one(
-            {
-                "user_id": item.user_id,
-                "item_id": item.item_id,
-                "color": item.color,
-                "storage": item.storage
-            },
-            {"$set": {"quantity": item.quantity}}
-        )
-    cart_items = await db.cart.find({"user_id": item.user_id}).to_list(1000)
+        cart_data[key] = item.dict() | {"quantity": item.quantity}
+    cart_items = [cart_data[k] for k in cart_data if k[0] == item.user_id]
     cart_count = sum(item["quantity"] for item in cart_items)
     total = sum(item["price"] * item["quantity"] for item in cart_items)
     return {"success": True, "cart_count": cart_count, "total": total}
 
 @api_router.get("/cart/{user_id}")
 async def get_cart(user_id: str = "anonymous"):
-    cart_items = await db.cart.aggregate([
-        {"$match": {"user_id": user_id}},
-        {"$lookup": {
-            "from": "products",
-            "localField": "item_id",
-            "foreignField": "id",
-            "as": "product"
-        }},
-        {"$unwind": "$product"},
-        {"$project": {
-            "_id": {"$toString": "$_id"},
-            "item_id": 1,
-            "item_name": "$product.name",
-            "price": 1,
-            "quantity": 1,
-            "color": 1,
-            "storage": 1,
-            "image_url": "$product.image_url"
-        }}
-    ]).to_list(1000)
+    cart_items = [cart_data[k] for k in cart_data if k[0] == user_id]
+    for item in cart_items:
+        product = next((p for p in products_data if p["id"] == item["item_id"]), {})
+        item.update({
+            "item_name": product.get("name", ""),
+            "image_url": product.get("image_url", "")
+        })
     total = sum(item["price"] * item["quantity"] for item in cart_items)
     return {"items": cart_items, "total": total}
 
 @api_router.post("/wishlist/add")
 async def add_to_wishlist(item: WishlistItem):
-    existing = await db.wishlist.find_one({
-        "user_id": item.user_id,
-        "item_id": item.item_id
-    })
-    if not existing:
-        await db.wishlist.insert_one(item.dict())
-    wishlist_count = await db.wishlist.count_documents({"user_id": item.user_id})
+    key = (item.user_id, item.item_id)
+    if key not in wishlist_data:
+        wishlist_data[key] = item.dict()
+    wishlist_count = len([k for k in wishlist_data if k[0] == item.user_id])
     return {"success": True, "wishlist_count": wishlist_count}
 
 @api_router.delete("/wishlist/remove")
 async def remove_from_wishlist(item: WishlistItem):
-    await db.wishlist.delete_one({
-        "user_id": item.user_id,
-        "item_id": item.item_id
-    })
-    wishlist_count = await db.wishlist.count_documents({"user_id": item.user_id})
+    key = (item.user_id, item.item_id)
+    wishlist_data.pop(key, None)
+    wishlist_count = len([k for k in wishlist_data if k[0] == item.user_id])
     return {"success": True, "wishlist_count": wishlist_count}
 
 @api_router.get("/wishlist/{user_id}")
 async def get_wishlist(user_id: str = "anonymous"):
-    wishlist_items = await db.wishlist.aggregate([
-        {"$match": {"user_id": user_id}},
-        {"$lookup": {
-            "from": "products",
-            "localField": "item_id",
-            "foreignField": "id",
-            "as": "product"
-        }},
-        {"$unwind": "$product"},
-        {"$project": {
-            "_id": {"$toString": "$_id"},
-            "item_id": 1,
-            "item_name": "$product.name",
-            "price": "$product.price",
-            "image_url": "$product.image_url"
-        }}
-    ]).to_list(1000)
+    wishlist_items = [wishlist_data[k] for k in wishlist_data if k[0] == user_id]
+    for item in wishlist_items:
+        product = next((p for p in products_data if p["id"] == item["item_id"]), {})
+        item.update({
+            "item_name": product.get("name", ""),
+            "price": product.get("price", 0.0),
+            "image_url": product.get("image_url", "")
+        })
     return wishlist_items
 
 @api_router.post("/auth/login")
 async def login(user: UserLogin):
-    db_user = await db.users.find_one({"username": user.username})
+    db_user = next((u for u in users_data.values() if u["username"] == user.username), None)
     if db_user and pwd_context.verify(user.password, db_user["password_hash"]):
         token = jwt.encode({
             "sub": user.username,
@@ -346,34 +241,17 @@ async def login(user: UserLogin):
 
 @api_router.post("/auth/signup")
 async def signup(user: UserSignup):
-    existing = await db.users.find_one({"username": user.username})
-    if existing:
+    if any(u["username"] == user.username for u in users_data.values()):
         return {"success": False, "message": "Username already exists"}
     password_hash = pwd_context.hash(user.password)
-    new_user = User(
-        username=user.username,
-        email=user.email,
-        password_hash=password_hash
-    )
-    await db.users.insert_one(new_user.dict())
+    new_user = {"username": user.username, "email": user.email, "password_hash": password_hash}
+    users_data[user.username] = new_user
     return {"success": True, "message": "Signup successful"}
 
 @api_router.post("/contact")
 async def contact(form: ContactForm):
-    await db.contact_forms.insert_one(form.dict())
+    contact_forms_data.append(form.dict())
     return {"success": True, "message": "Thank you for your message!"}
-
-# Lifespan handler
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await init_db()
-    logger.info("Database initialized")
-    yield
-    client.close()
-    logger.info("MongoDB client closed")
-
-# Create FastAPI app with lifespan
-app = FastAPI(lifespan=lifespan)
 
 # Include api_router
 app.include_router(api_router)
@@ -388,8 +266,5 @@ app.add_middleware(
 )
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
