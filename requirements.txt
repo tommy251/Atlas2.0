@@ -1,0 +1,7 @@
+fastapi==0.110.1
+uvicorn==0.25.0
+python-dotenv==1.0.1
+pydantic==2.9.2
+pyjwt==2.10.1
+passlib[bcrypt]==1.7.4
+pandas==2.2.3

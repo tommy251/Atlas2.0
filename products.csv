@@ -1,0 +1,7 @@
+id,name,price,description,image_url,category,colors,storage,specs,,,,
+1,iPhone 16 Plus,750000,The latest iPhone with A18 chip...,https://images.unsplash.com/photo-...,Brand New Phones,"Black,White,Blue","128GB,256GB,512GB","{""Processor"": ""A18 Bionic"", ""Display"": ""6.7-inch..."", ""Camera"": ""...""}",,,,
+2,Samsung Galaxy S24,650000,Flagship Android phone with...,https://example.com/samsung-s24.jpg,Brand New Phones,"Black,Gray,Green","128GB,256GB","{""Processor"": ""Snapdragon 8..."", ""Display"": ""..."", ""Camera"": ""...""}",,,,
+3,Dell XPS 13,450000,High-performance laptop with...,https://example.com/dell-xps.jpg,Laptops,"Silver,Gray","512GB,1TB","{""Processor"": ""Intel i7"", ""Display"": ""13.4-inch"", ""RAM"": ""16GB""}",,,,
+4,Wireless Earbuds,15000,Noise-cancelling earbuds with...,https://example.com/earbuds.jpg,Accessories,"Black,White",,"{""Battery"": ""20h"", ""Noise Cancellation"": ""Active""}",,,,
+5,MacBook Air M2,600000,Lightweight MacBook with M2 chip...,https://example.com/macbook-air.jpg,Laptops,"Silver,Space Gray","256GB,512GB","{""Processor"": ""M2"", ""Display"": ""13.6-inch"", ""RAM"": ""8GB""}",,,,
+6,"iPad Pro 12.9""",800000,Powerful tablet with M2 chip...,https://example.com/ipad-pro.jpg,Accessories,"Silver,Space Gray",,,,,,
