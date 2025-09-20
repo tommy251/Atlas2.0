@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -13,6 +13,7 @@ import json
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import jwt
+from fastapi.staticfiles import StaticFiles
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -129,10 +130,6 @@ app = FastAPI(lifespan=lifespan)
 api_router = APIRouter(prefix="/api")
 
 # Routes
-@app.get("/")
-async def root_redirect():
-    return {"message": "Welcome to Atlantis Technologies API. Use /api/ for endpoints."}
-
 @api_router.get("/")
 async def root():
     return {"message": "Atlantis Technologies API (MongoDB removed)"}
@@ -260,6 +257,16 @@ async def contact(form: ContactForm):
 # Include api_router
 app.include_router(api_router)
 
+# Mount static files for React build
+app.mount("/static", StaticFiles(directory="build/static"), name="static")
+
+# Catch-all route for SPA: Serve index.html for non-API paths
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return FileResponse("build/index.html")
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -272,3 +279,7 @@ app.add_middleware(
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
