@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles  # Added for static file serving
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -374,6 +375,9 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
+
+# Mount static files for React frontend (serves build folder at root)
+app.mount("/", StaticFiles(directory="build", html=True), name="static")
 
 # Include api_router
 app.include_router(api_router)
