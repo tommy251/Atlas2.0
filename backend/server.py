@@ -17,6 +17,13 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import jwt
 
+# Configure logging early (before any logger use)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -376,13 +383,13 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
 
-# Mount static files for React frontend (serves build folder at root)
-app.mount("/", StaticFiles(directory="build", html=True), name="static")
-
-# Include api_router
+# Include API router FIRST (so /api/* and /docs take priority)
 app.include_router(api_router)
 
-# Configure CORS
+# Mount static files LAST (serves React SPA for all unmatched routes)
+app.mount("/", StaticFiles(directory="build", html=True), name="static")
+
+# Configure CORS (after routes)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -390,10 +397,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
