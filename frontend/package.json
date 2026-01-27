@@ -1,13 +1,15 @@
 {
   "name": "atlas2.0",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "build": "cd frontend && npm install && npm run build && cd .. && echo 'Build complete!'",
-    "start": "python server.py",
-    "dev": "concurrently \"cd frontend && npm start\" \"python server.py\"",
-    "clean": "rm -rf build && rm -rf frontend/build && rm -rf frontend/node_modules/.cache"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "render-build": "cd /opt/render/project && npm install && npm run build"
   },
-  "devDependencies": {
-    "concurrently": "^8.2.0"
+  "dependencies": {
+    // your dependencies
   }
 }
