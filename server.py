@@ -22,6 +22,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Define paths
+FRONTEND_BUILD_DIR = ROOT_DIR / "build"  # Your React build folder
+
 # Pydantic Models
 class Product(BaseModel):
     id: str
@@ -124,15 +127,15 @@ async def lifespan(app: FastAPI):
     logger.info("Application shutdown")
 
 # Create FastAPI app with lifespan
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="Atlas2.0 E-commerce API")
 
 # Create api_router
 api_router = APIRouter(prefix="/api")
 
 # Routes
 @api_router.get("/")
-async def root():
-    return {"message": "Atlantis Technologies API (MongoDB removed)"}
+async def api_root():
+    return {"message": "Atlas2.0 E-commerce API"}
 
 @api_router.post("/init-db")
 async def initialize_database():
@@ -154,16 +157,21 @@ async def get_product(product_id: str):
 
 @api_router.get("/categories")
 async def get_categories():
-    return list(set(p.get("category") for p in products_data if p.get("category")))
+    categories = list(set(p.get("category") for p in products_data if p.get("category")))
+    return {"categories": categories}
 
 @api_router.get("/search")
 async def search_products(q: str):
-    return {
-        "products": [
-            p for p in products_data
-            if q.lower() in p.get("name", "").lower() or q.lower() in p.get("category", "").lower() or q.lower() in p.get("description", "").lower()
-        ]
-    }
+    if not q:
+        return {"products": []}
+    
+    results = [
+        p for p in products_data
+        if q.lower() in p.get("name", "").lower() 
+        or q.lower() in p.get("category", "").lower() 
+        or q.lower() in p.get("description", "").lower()
+    ]
+    return {"products": results}
 
 @api_router.post("/cart/add")
 async def add_to_cart(item: CartItem):
@@ -235,7 +243,7 @@ async def login(user: UserLogin):
         token = jwt.encode({
             "sub": user.username,
             "exp": datetime.utcnow() + timedelta(hours=24)
-        }, os.getenv("SECRET_KEY", "your-secret-key"), algorithm="HS256")
+        }, os.getenv("SECRET_KEY", "your-secret-key-12345"), algorithm="HS256")
         return {"success": True, "message": "Login successful", "token": token, "user": user.username}
     else:
         return {"success": False, "message": "Invalid credentials"}
@@ -254,32 +262,62 @@ async def contact(form: ContactForm):
     contact_forms_data.append(form.dict())
     return {"success": True, "message": "Thank you for your message!"}
 
+# Health check
+@api_router.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
 # Include api_router
 app.include_router(api_router)
 
-# Mount static files for React build
-app.mount("/static", StaticFiles(directory="build/static"), name="static")
-
-# Catch-all route for SPA: Serve index.html for non-API paths
-@app.get("/{full_path:path}")
-async def catch_all(full_path: str):
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="Not Found")
-    return FileResponse("build/index.html")
+# Serve static files if build directory exists
+if FRONTEND_BUILD_DIR.exists() and (FRONTEND_BUILD_DIR / "static").exists():
+    app.mount("/static", StaticFiles(directory=FRONTEND_BUILD_DIR / "static"), name="static")
+    
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(FRONTEND_BUILD_DIR / "index.html")
+    
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Check if it's an API call
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API route not found")
+        
+        # Check if the file exists in the build directory
+        requested_file = FRONTEND_BUILD_DIR / full_path
+        if requested_file.exists() and requested_file.is_file():
+            return FileResponse(requested_file)
+        
+        # Otherwise serve index.html (React Router will handle it)
+        return FileResponse(FRONTEND_BUILD_DIR / "index.html")
+else:
+    logger.warning(f"React build directory not found at {FRONTEND_BUILD_DIR}. Only API endpoints will be available.")
+    
+    @app.get("/")
+    async def root():
+        return {"message": "Atlas2.0 API is running. Build frontend with 'npm run build' to serve React app."}
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["*"],  # For development, restrict in production
     allow_credentials=True,
-    allow_origins=[os.getenv("FRONTEND_URL", "*")],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    logger.info(f"Starting server on port {port}")
+    logger.info(f"React build path: {FRONTEND_BUILD_DIR}")
+    logger.info(f"Build exists: {FRONTEND_BUILD_DIR.exists()}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
