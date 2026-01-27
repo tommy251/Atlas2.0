@@ -1,15 +1,15 @@
 {
-  "short_name": "Atlantis Tech",
-  "name": "Atlantis Technologies",
+  "short_name": "Atlas2.0",
+  "name": "Atlas2.0 E-commerce",
   "icons": [
     {
       "src": "favicon.ico",
       "type": "image/x-icon",
-      "sizes": "16x16"
+      "sizes": "16x16 32x32 64x64"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#111827",
+  "background_color": "#111827"
 }
