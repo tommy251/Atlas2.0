@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import json
 import asyncio
 import logging
+from bson import ObjectId
 
 # Configure logging
 logging.basicConfig(
@@ -57,6 +58,7 @@ async def import_products(csv_file_path):
                     "name": row['name'],
                     "price": float(row['price'].replace(',', '')) if row['price'] else 0.0,
                     "image_url": row['image_url'],
+                    "best_price": row.get('best_price', 'false').lower() == 'true',
                     "images": [row['image_url']] if row['image_url'] else [],
                     "description": row.get('description', ''),
                     "category": row['category'],

@@ -257,15 +257,8 @@ async def contact(form: ContactForm):
 # Include api_router
 app.include_router(api_router)
 
-# Mount static files for React build
-app.mount("/static", StaticFiles(directory="build/static"), name="static")
-
-# Catch-all route for SPA: Serve index.html for non-API paths
-@app.get("/{full_path:path}")
-async def catch_all(full_path: str):
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="Not Found")
-    return FileResponse("build/index.html")
+# Mount the React build folder at root for proper SPA serving (fixes blank pages on refresh/render)
+app.mount("/", StaticFiles(directory="build", html=True), name="site")
 
 # Configure CORS
 app.add_middleware(
