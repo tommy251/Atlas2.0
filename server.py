@@ -16,6 +16,9 @@ from datetime import datetime, timedelta
 import jwt
 from fastapi.staticfiles import StaticFiles
 
+# Get Render's PORT environment variable
+PORT = int(os.environ.get("PORT", 8000))
+
 # Configure logging FIRST
 logging.basicConfig(
     level=logging.INFO,
@@ -413,11 +416,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ... keep all your existing code above ...
+
+# ... all your existing code ...
+
+# Get port from environment variable
+PORT = int(os.environ.get("PORT", 8000))
+
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    logger.info(f"🚀 Starting Atlas2.0 server on port {port}")
+    logger.info(f"🚀 Starting Atlas2.0 server on port {PORT}")
     logger.info(f"📁 Build directory: {FRONTEND_BUILD_DIR}")
     logger.info(f"✅ Build exists: {FRONTEND_BUILD_DIR.exists() if FRONTEND_BUILD_DIR else False}")
-    logger.info(f"🌐 Server will be available at: http://0.0.0.0:{port}")
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+    logger.info(f"🌐 Server will be available at: http://0.0.0.0:{PORT}")
+    uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="info")
