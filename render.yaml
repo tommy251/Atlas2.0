@@ -1,17 +1,14 @@
 services:
   - type: web
-    name: atlas2.0
+    name: atlas2-0
     env: python
     buildCommand: |
-      # Install Node dependencies
+      cd /opt/render/project
       npm install
-      # Build React app
       npm run build
-      # Install Python dependencies
       pip install -r requirements.txt
     startCommand: python server.py
     envVars:
       - key: PORT
         value: 10000
-    # Tell Render where your source files are
-    rootDir: .
+    rootDir: /
