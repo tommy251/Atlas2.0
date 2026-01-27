@@ -3,12 +3,11 @@ services:
     name: atlas2-0
     env: python
     buildCommand: |
-      cd /opt/render/project
-      npm install
-      npm run build
+      pip install --upgrade pip
       pip install -r requirements.txt
+      echo "Dependencies installed successfully"
     startCommand: python server.py
     envVars:
       - key: PORT
         value: 10000
-    rootDir: /
+    pythonVersion: "3.9.0"
