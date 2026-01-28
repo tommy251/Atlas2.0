@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react
 import axios from 'axios';
 import './App.css';
 
-// Import your page components here (adjust paths if they're in a subfolder like ./components/ or ./pages/)
-import Home from './Home';              // or './components/Home' if in a folder
+// Import your page components (these should now exist as .js files in src/)
+import Home from './Home';
 import Shop from './Shop';
 import ProductDetail from './ProductDetail';
 import Cart from './Cart';
@@ -13,17 +13,16 @@ import Search from './Search';
 import About from './About';
 import Contact from './Contact';
 import Login from './Login';
-import Footer from './Footer';            // If Footer is separate; if not, define it below or remove <Footer />
+import Footer from './Footer';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://atlas2-0.onrender.com';  // Fallback for local testing
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://127.0.0.1:8000'; // Local fallback (change to your Render URL when deployed)
 const API = `${BACKEND_URL}/api`;
 
-// Context for cart, wishlist, and navigation
+// Context
 const AppContext = createContext();
-
 const useApp = () => useContext(AppContext);
 
-// Header Component (unchanged from your code)
+// Header Component (uses context)
 const Header = () => {
   const { cartCount, wishlistCount, navigate, searchQuery, setSearchQuery } = useApp();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,7 +31,7 @@ const Header = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery(''); // Clear search after navigation
+      setSearchQuery('');
     }
   };
 
@@ -52,10 +51,7 @@ const Header = () => {
               placeholder="Search for products..."
               className="flex-1 px-4 py-2 bg-gray-800 border border-gray-600 rounded-l-lg text-white focus:outline-none focus:border-blue-500"
             />
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 transition-colors"
-            >
+            <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 transition-colors">
               Search
             </button>
           </form>
@@ -76,10 +72,7 @@ const Header = () => {
             </Link>
           </div>
 
-          <button
-            className="md:hidden text-gray-300 hover:text-blue-400"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
+          <button className="md:hidden text-gray-300 hover:text-blue-400" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
@@ -120,7 +113,7 @@ const Header = () => {
   );
 };
 
-// AppProvider (unchanged except now inside Router so useNavigate works)
+// Full AppProvider with all functions (safe try/catch to prevent crashes when backend is not running)
 const AppProvider = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
@@ -128,22 +121,112 @@ const AppProvider = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
-  // ... (rest of your AppProvider code exactly as you had it - updateCartCount, updateWishlistCount, addToCart, addToWishlist, logout, value)
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      updateCartCount();
+      updateWishlistCount();
+    }
+  }, []);
 
-  return (
-    <AppContext.Provider value={value}>
-      {children}
-    </AppContext.Provider>
-  );
+  const updateCartCount = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('user') || 'anonymous';
+      const response = await axios.get(`${API}/cart/${userId}`, {
+        headers: { Authorization: `Bearer ${token || ''}` }
+      });
+      const count = response.data.items ? response.data.items.reduce((total, item) => total + item.quantity, 0) : 0;
+      setCartCount(count);
+    } catch (error) {
+      console.error('Error updating cart count (backend may not be running):', error);
+      setCartCount(0);
+    }
+  };
+
+  const updateWishlistCount = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('user') || 'anonymous';
+      const response = await axios.get(`${API}/wishlist/${userId}`, {
+        headers: { Authorization: `Bearer ${token || ''}` }
+      });
+      setWishlistCount(response.data.length || 0);
+    } catch (error) {
+      console.error('Error updating wishlist count (backend may not be running):', error);
+      setWishlistCount(0);
+    }
+  };
+
+  const addToCart = async (itemId, price, color = '', storage = '') => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('user') || 'anonymous';
+      await axios.post(`${API}/cart/add`, {
+        user_id: userId,
+        item_id: itemId,
+        price,
+        color,
+        storage
+      }, { headers: { Authorization: `Bearer ${token || ''}` } });
+      updateCartCount();
+      alert('Added to cart!');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add to cart (backend may be offline)');
+    }
+  };
+
+  const addToWishlist = async (itemId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('user') || 'anonymous';
+      await axios.post(`${API}/wishlist/add`, { user_id: userId, item_id: itemId }, {
+        headers: { Authorization: `Bearer ${token || ''}` }
+      });
+      updateWishlistCount();
+      alert('Added to wishlist!');
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+      alert('Failed to add to wishlist (backend may be offline)');
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
+    setCartCount(0);
+    setWishlistCount(0);
+    navigate('/login');
+  };
+
+  const value = {
+    cartCount,
+    wishlistCount,
+    user,
+    addToCart,
+    addToWishlist,
+    updateCartCount,
+    updateWishlistCount,
+    logout,
+    navigate,
+    searchQuery,
+    setSearchQuery
+  };
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 function App() {
   return (
     <Router>
       <AppProvider>
-        <div className="App bg-gray-900 text-white">
+        <div className="App bg-gray-900 text-white min-h-screen flex flex-col">
           <Header />
-          <main className="min-h-screen pt-20">  {/* Added pt-20 to account for fixed header */}
+          <main className="flex-1 pt-20">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<Shop />} />
