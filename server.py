@@ -204,8 +204,8 @@ async def initialize_database():
 async def get_products(category: Optional[str] = None):
     if category:
         filtered = [p for p in products_data if p.get("category") == category]
-        return {"products": filtered, "count": len(filtered)}
-    return {"products": products_data, "count": len(products_data)}
+        return filtered
+    return products_data
 
 @api_router.get("/products/{product_id}")
 async def get_product(product_id: str):
@@ -415,10 +415,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ... keep all your existing code above ...
-
-# ... all your existing code ...
 
 # Get port from environment variable
 PORT = int(os.environ.get("PORT", 8000))
