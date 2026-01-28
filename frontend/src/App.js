@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react
 import axios from 'axios';
 import './App.css';
 
-// Import your page components (these should now exist as .js files in src/)
+// Import your page components
 import Home from './Home';
 import Shop from './Shop';
 import ProductDetail from './ProductDetail';
@@ -15,11 +15,12 @@ import Contact from './Contact';
 import Login from './Login';
 import Footer from './Footer';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://127.0.0.1:8000'; // Local fallback (change to your Render URL when deployed)
-const API = `${BACKEND_URL}/api`;
+// Use relative API paths (works both locally with proxy and on Render deployed)
+const API_BASE = '/api';
 
 // Context
 const AppContext = createContext();
+
 const useApp = () => useContext(AppContext);
 
 // Header Component (uses context)
@@ -113,7 +114,7 @@ const Header = () => {
   );
 };
 
-// Full AppProvider with all functions (safe try/catch to prevent crashes when backend is not running)
+// AppProvider – all functions with safe error handling
 const AppProvider = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
@@ -134,13 +135,13 @@ const AppProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('user') || 'anonymous';
-      const response = await axios.get(`${API}/cart/${userId}`, {
+      const response = await axios.get(`${API_BASE}/cart/${userId}`, {
         headers: { Authorization: `Bearer ${token || ''}` }
       });
       const count = response.data.items ? response.data.items.reduce((total, item) => total + item.quantity, 0) : 0;
       setCartCount(count);
     } catch (error) {
-      console.error('Error updating cart count (backend may not be running):', error);
+      console.error('Error updating cart count:', error);
       setCartCount(0);
     }
   };
@@ -149,12 +150,12 @@ const AppProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('user') || 'anonymous';
-      const response = await axios.get(`${API}/wishlist/${userId}`, {
+      const response = await axios.get(`${API_BASE}/wishlist/${userId}`, {
         headers: { Authorization: `Bearer ${token || ''}` }
       });
       setWishlistCount(response.data.length || 0);
     } catch (error) {
-      console.error('Error updating wishlist count (backend may not be running):', error);
+      console.error('Error updating wishlist count:', error);
       setWishlistCount(0);
     }
   };
@@ -163,7 +164,7 @@ const AppProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('user') || 'anonymous';
-      await axios.post(`${API}/cart/add`, {
+      await axios.post(`${API_BASE}/cart/add`, {
         user_id: userId,
         item_id: itemId,
         price,
@@ -182,7 +183,7 @@ const AppProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('user') || 'anonymous';
-      await axios.post(`${API}/wishlist/add`, { user_id: userId, item_id: itemId }, {
+      await axios.post(`${API_BASE}/wishlist/add`, { user_id: userId, item_id: itemId }, {
         headers: { Authorization: `Bearer ${token || ''}` }
       });
       updateWishlistCount();
@@ -247,3 +248,4 @@ function App() {
 }
 
 export default App;
+export { useApp };  // <-- This line fixes the import error in Shop.js and other components
