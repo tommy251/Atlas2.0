@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { useApp } from './App';  // Now works thanks to export in App.js
+import { useApp } from './App';
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
@@ -28,31 +28,43 @@ const Shop = () => {
   return (
     <div className="pt-24 min-h-screen bg-gray-900">
       <h1 className="text-5xl text-center py-10 font-bold text-blue-400">Shop All Products</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-8 pb-20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-8 pb-20 max-w-7xl mx-auto">
         {products.map(product => (
-          <div key={product.id} className="bg-gray-800 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow">
-            <div className="bg-gray-700 h-64 flex items-center justify-center">
-              <p className="text-gray-500">Image Placeholder</p> {/* Replace with real image later */}
+          <div key={product.id} className="bg-gray-800 rounded-xl overflow-hidden shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:-translate-y-2">
+            {/* Product Image Frame */}
+            <div className="relative bg-gray-700 h-64 flex items-center justify-center overflow-hidden">
+              <div className="bg-gray-600 border-4 border-dashed border-gray-500 rounded-xl w-48 h-48 flex items-center justify-center">
+                <p className="text-gray-400 text-center">Product Image<br />(Add real later)</p>
+              </div>
+              <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                ${product.price || '0.00'}
+              </div>
             </div>
+
+            {/* Product Info Frame */}
             <div className="p-6">
-              <h3 className="text-2xl font-bold text-blue-400">{product.name || 'Unnamed Product'}</h3>
-              <p className="text-gray-300 mt-2">${product.price || '0.00'}</p>
-              <p className="text-gray-400 text-sm mt-2">{product.description || 'No description available'}</p>
-              <div className="mt-6 flex space-x-4">
+              <h3 className="text-2xl font-bold text-blue-400 truncate">{product.name || 'Unnamed Product'}</h3>
+              <p className="text-gray-400 text-sm mt-2 line-clamp-2">{product.description || 'No description available'}</p>
+              
+              <div className="mt-6 flex gap-3">
                 <button
                   onClick={() => addToCart(product.id, product.price)}
-                  className="flex-1 bg-blue-600 py-3 rounded hover:bg-blue-700 transition"
+                  className="flex-1 bg-blue-600 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
                 >
                   Add to Cart
                 </button>
                 <button
                   onClick={() => addToWishlist(product.id)}
-                  className="px-6 py-3 bg-gray-700 rounded hover:bg-gray-600 transition"
+                  className="px-4 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition text-xl"
                 >
                   ❤️
                 </button>
               </div>
-              <Link to={`/product/${product.id}`} className="block mt-4 text-center text-blue-400 hover:underline">
+
+              <Link 
+                to={`/product/${product.id}`} 
+                className="block mt-4 text-center text-blue-400 hover:text-blue-300 underline transition"
+              >
                 View Details →
               </Link>
             </div>
