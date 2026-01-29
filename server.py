@@ -103,85 +103,102 @@ contact_forms_data = []
 # Load products from CSV (unchanged)
 def load_products():
     global products_data
+    products_data = []  # Start empty
     csv_path = ROOT_DIR / 'products.csv'
-    products_data = []  # Reset to empty
-    if not csv_path.exists():
-        logger.warning(f"⚠️ products.csv not found at {csv_path}")
-        return
     
-    try:
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            loaded_count = 0
-            for row_num, row in enumerate(reader, start=2):  # start=2 for line number
-                try:
-                    # Safe price parse
-                    price_str = row.get('price', '0').strip().replace(',', '')
-                    price = float(price_str) if price_str else 0.0
-                    
-                    # Safe specs JSON
-                    specs = {}
-                    specs_raw = row.get('specs', '').strip()
-                    if specs_raw:
-                        try:
-                            specs = json.loads(specs_raw)
-                        except json.JSONDecodeError as je:
-                            logger.warning(f"Row {row_num}: Bad specs JSON - skipping specs: {je}")
-                    
-                    # Safe lists
-                    colors = [c.strip() for c in row.get('colors', '').split(';') if c.strip()]
-                    storage = [s.strip() for s in row.get('storage', '').split(';') if s.strip()]
-                    
-                    product = Product(
-                        id=row.get('id', f"temp-{loaded_count}"),
-                        name=row.get('name', 'Unnamed Product'),
-                        price=price,
-                        image_url=row.get('image_url', ''),
-                        best_price=row.get('best_price', 'false').lower() == 'true',
-                        images=[row.get('image_url', '')] if row.get('image_url') else [],
-                        description=row.get('description', ''),
-                        category=row.get('category', 'Uncategorized'),
-                        colors=colors,
-                        storage=storage,
-                        specs=specs
-                    ).dict()
-                    
-                    products_data.append(product)
-                    loaded_count += 1
-                    
-                except Exception as e:
-                    logger.error(f"Row {row_num}: Skipping bad row - {str(e)} | Row data: {row}")
-        
-        logger.info(f"✅ Successfully loaded {len(products_data)} valid products from CSV (skipped bad rows)")
-        
-        # Fallback: Add a test product if still empty (so shop never blank)
-        if len(products_data) == 0:
-            logger.warning("No valid products loaded - adding test product")
-            products_data.append({
+    if not csv_path.exists():
+        logger.warning(f"⚠️ products.csv NOT found at {csv_path} — using fallback products")
+    else:
+        try:
+            with open(csv_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                loaded = 0
+                for row_num, row in enumerate(reader, start=2):  # Line numbers
+                    try:
+                        # Safe price
+                        price_str = row.get('price', '0').replace(',', '').strip()
+                        price = float(price_str) if price_str else 0.0
+                        
+                        # Safe specs
+                        specs = {}
+                        if row.get('specs', '').strip():
+                            try:
+                                specs = json.loads(row['specs'])
+                            except:
+                                logger.warning(f"Row {row_num}: Bad specs JSON, skipping specs")
+                        
+                        # Safe lists
+                        colors = [c.strip() for c in row.get('colors', '').split(';') if c.strip()]
+                        storage = [s.strip() for s in row.get('storage', '').split(';') if s.strip()]
+                        
+                        product = {
+                            "id": row.get('id', f"csv-{loaded}"),
+                            "name": row.get('name', 'Unnamed Product'),
+                            "price": price,
+                            "image_url": row.get('image_url', ''),
+                            "best_price": row.get('best_price', 'false').lower() == 'true',
+                            "images": [row.get('image_url', '')] if row.get('image_url') else [],
+                            "description": row.get('description', 'No description'),
+                            "category": row.get('category', 'General'),
+                            "colors": colors,
+                            "storage": storage,
+                            "specs": specs
+                        }
+                        products_data.append(product)
+                        loaded += 1
+                    except Exception as e:
+                        logger.error(f"Row {row_num} bad - skipping: {e} | Data: {row}")
+            
+            logger.info(f"✅ Loaded {len(products_data)} valid products from CSV")
+        except Exception as e:
+            logger.error(f"❌ CSV load failed: {e}")
+    
+    # Fallback test products (shop NEVER empty again)
+    if len(products_data) == 0:
+        logger.info("Adding fallback test products")
+        products_data = [
+            {
                 "id": "test-1",
-                "name": "Test Phone",
-                "price": 500000.0,
+                "name": "iPhone 15 Pro",
+                "price": 1200000.0,
                 "image_url": "",
                 "best_price": True,
                 "images": [],
-                "description": "This is a test product to confirm shop works",
+                "description": "Latest flagship phone - test product",
                 "category": "Phones",
-                "colors": ["Black", "White"],
-                "storage": ["128GB"],
-                "specs": {"RAM": "8GB", "Camera": "108MP"}
-            })
-            
-    except Exception as e:
-        logger.error(f"❌ Critical error loading CSV: {str(e)} - products empty")
-        # Ultimate fallback
-        products_data = [{
-            "id": "fallback-1",
-            "name": "Fallback Product",
-            "price": 100000.0,
-            "image_url": "",
-            "description": "Backend CSV failed - this is fallback",
-            "category": "Test"
-        }]
+                "colors": ["Black", "Blue", "Silver"],
+                "storage": ["256GB", "512GB"],
+                "specs": {"RAM": "8GB", "Camera": "48MP"}
+            },
+            {
+                "id": "test-2",
+                "name": "Samsung Galaxy S24",
+                "price": 950000.0,
+                "image_url": "",
+                "best_price": False,
+                "images": [],
+                "description": "Android powerhouse - test product",
+                "category": "Phones",
+                "colors": ["Gray", "Purple"],
+                "storage": ["128GB", "256GB"],
+                "specs": {"RAM": "12GB", "Display": "Dynamic AMOLED"}
+            },
+            {
+                "id": "test-3",
+                "name": "AirPods Pro",
+                "price": 250000.0,
+                "image_url": "",
+                "best_price": True,
+                "images": [],
+                "description": "Premium wireless earbuds - test product",
+                "category": "Accessories",
+                "colors": ["White"],
+                "storage": [],
+                "specs": {"Noise Cancellation": "Active", "Battery": "6 hours"}
+            }
+        ]
+
+    logger.info(f"Final products count: {len(products_data)} (ready for shop)")
 # Lifespan (unchanged)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
