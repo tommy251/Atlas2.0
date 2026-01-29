@@ -5,26 +5,65 @@ import { useApp } from './App';
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { addToCart, addToWishlist } = useApp();
 
   useEffect(() => {
-    axios.get('/api/products')
-      .then(res => setProducts(res.data || []))
-      .catch(err => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get('/api/products');
+        // Force array even if backend returns object/null/undefined
+        const data = Array.isArray(res.data) ? res.data : [];
+        setProducts(data);
+        setLoading(false);
+      } catch (err) {
         console.error('Failed to load products:', err);
+        setError('Failed to load products. Please try again later.');
         setProducts([]);
-      });
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
-  if (products.length === 0) {
+  // Loading state
+  if (loading) {
     return (
-      <div className="pt-24 min-h-screen bg-gray-900 text-center">
-        <h1 className="text-5xl font-bold text-blue-400 py-10">Shop All Products</h1>
-        <p className="text-xl text-gray-300">Loading products... (run backend if empty)</p>
+      <div className="pt-24 min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-5xl font-bold text-blue-400 mb-6">Shop All Products</h1>
+          <p className="text-2xl text-gray-300 animate-pulse">Loading products...</p>
+        </div>
       </div>
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="pt-24 min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-5xl font-bold text-blue-400 mb-6">Shop All Products</h1>
+          <p className="text-2xl text-red-500">{error}</p>
+          <p className="text-gray-400 mt-4">Check console for details or try refreshing.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (products.length === 0) {
+    return (
+      <div className="pt-24 min-h-screen bg-gray-900 text-center">
+        <h1 className="text-5xl font-bold text-blue-400 py-10">Shop All Products</h1>
+        <p className="text-xl text-gray-300">No products available right now.</p>
+      </div>
+    );
+  }
+
+  // Main shop grid
   return (
     <div className="pt-24 min-h-screen bg-gray-900">
       <h1 className="text-5xl text-center py-10 font-bold text-blue-400">Shop All Products</h1>
@@ -37,7 +76,7 @@ const Shop = () => {
                 <p className="text-gray-400 text-center">Product Image<br />(Add real later)</p>
               </div>
               <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                ${product.price || '0.00'}
+                ₦{product.price?.toLocaleString() || '0'}
               </div>
             </div>
 
