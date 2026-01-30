@@ -120,7 +120,7 @@ def load_products():
                         if specs_raw:
                             try:
                                 specs = json.loads(specs_raw)
-                            except json.JSONDecodeError:
+                            except:
                                 logger.warning(f"Row {row_num}: Invalid specs JSON — skipping specs")
                         
                         colors = [c.strip() for c in row.get('colors', '').split(';') if c.strip()]
@@ -184,18 +184,143 @@ app = FastAPI(
 
 api_router = APIRouter(prefix="/api")
 
-# === All your API routes here (unchanged) ===
 @api_router.get("/")
 async def api_root():
-    return {"message": "Atlas2.0 E-commerce API"}
+    return {
+        "message": "Atlas2.0 E-commerce API",
+        "endpoints": [
+            "/api/health",
+            "/api/products",
+            "/api/categories",
+            "/api/search"
+        ]
+    }
+
+@api_router.post("/init-db")
+async def initialize_database():
+    load_products()
+    return {"message": "Data initialized from products.csv"}
 
 @api_router.get("/products")
 async def get_products(category: Optional[str] = None):
     if category:
-        return [p for p in products_data if p.get("category") == category]
+        filtered = [p for p in products_data if p.get("category") == category]
+        return filtered
     return products_data
 
-# ... (include all your other routes: /products/{id}, /categories, /search, cart, wishlist, auth, contact, etc.)
+@api_router.get("/products/{product_id}")
+async def get_product(product_id: str):
+    product = next((p for p in products_data if p.get("id") == product_id), None)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+@api_router.get("/categories")
+async def get_categories():
+    categories = list(set(p.get("category") for p in products_data if p.get("category")))
+    return {"categories": sorted(categories)}
+
+@api_router.get("/search")
+async def search_products(q: str):
+    if not q:
+        return {"products": [], "count": 0}
+    
+    results = [
+        p for p in products_data
+        if q.lower() in p.get("name", "").lower() 
+        or q.lower() in p.get("category", "").lower() 
+        or q.lower() in p.get("description", "").lower()
+    ]
+    return {"products": results, "count": len(results)}
+
+@api_router.post("/cart/add")
+async def add_to_cart(item: CartItem):
+    key = (item.user_id, item.item_id, item.color, item.storage)
+    if key in cart_data:
+        cart_data[key]["quantity"] += 1
+    else:
+        cart_data[key] = item.dict()
+    cart_items = [cart_data[k] for k in cart_data if k[0] == item.user_id]
+    cart_count = sum(item["quantity"] for item in cart_items)
+    total = sum(item["price"] * item["quantity"] for item in cart_items)
+    return {"success": True, "cart_count": cart_count, "total": total}
+
+@api_router.put("/cart/update")
+async def update_cart(item: CartItem):
+    key = (item.user_id, item.item_id, item.color, item.storage)
+    if item.quantity <= 0:
+        cart_data.pop(key, None)
+    else:
+        cart_data[key] = item.dict() | {"quantity": item.quantity}
+    cart_items = [cart_data[k] for k in cart_data if k[0] == item.user_id]
+    cart_count = sum(item["quantity"] for item in cart_items)
+    total = sum(item["price"] * item["quantity"] for item in cart_items)
+    return {"success": True, "cart_count": cart_count, "total": total}
+
+@api_router.get("/cart/{user_id}")
+async def get_cart(user_id: str = "anonymous"):
+    cart_items = [cart_data[k] for k in cart_data if k[0] == user_id]
+    for item in cart_items:
+        product = next((p for p in products_data if p["id"] == item["item_id"]), {})
+        item.update({
+            "item_name": product.get("name", ""),
+            "image_url": product.get("image_url", "")
+        })
+    total = sum(item["price"] * item["quantity"] for item in cart_items)
+    return {"items": cart_items, "total": total, "count": len(cart_items)}
+
+@api_router.post("/wishlist/add")
+async def add_to_wishlist(item: WishlistItem):
+    key = (item.user_id, item.item_id)
+    if key not in wishlist_data:
+        wishlist_data[key] = item.dict()
+    wishlist_count = len([k for k in wishlist_data if k[0] == item.user_id])
+    return {"success": True, "wishlist_count": wishlist_count}
+
+@api_router.delete("/wishlist/remove")
+async def remove_from_wishlist(item: WishlistItem):
+    key = (item.user_id, item.item_id)
+    wishlist_data.pop(key, None)
+    wishlist_count = len([k for k in wishlist_data if k[0] == item.user_id])
+    return {"success": True, "wishlist_count": wishlist_count}
+
+@api_router.get("/wishlist/{user_id}")
+async def get_wishlist(user_id: str = "anonymous"):
+    wishlist_items = [wishlist_data[k] for k in wishlist_data if k[0] == user_id]
+    for item in wishlist_items:
+        product = next((p for p in products_data if p["id"] == item["item_id"]), {})
+        item.update({
+            "item_name": product.get("name", ""),
+            "price": product.get("price", 0.0),
+            "image_url": product.get("image_url", "")
+        })
+    return {"items": wishlist_items, "count": len(wishlist_items)}
+
+@api_router.post("/auth/login")
+async def login(user: UserLogin):
+    db_user = next((u for u in users_data.values() if u["username"] == user.username), None)
+    if db_user and pwd_context.verify(user.password, db_user["password_hash"]):
+        token = jwt.encode({
+            "sub": user.username,
+            "exp": datetime.utcnow() + timedelta(hours=24)
+        }, os.getenv("SECRET_KEY", "your-secret-key-12345"), algorithm="HS256")
+        return {"success": True, "message": "Login successful", "token": token, "user": user.username}
+    else:
+        return {"success": False, "message": "Invalid credentials"}
+
+@api_router.post("/auth/signup")
+async def signup(user: UserSignup):
+    if any(u["username"] == user.username for u in users_data.values()):
+        return {"success": False, "message": "Username already exists"}
+    password_hash = pwd_context.hash(user.password)
+    new_user = {"username": user.username, "email": user.email, "password_hash": password_hash}
+    users_data[user.username] = new_user
+    return {"success": True, "message": "Signup successful"}
+
+@api_router.post("/contact")
+async def contact(form: ContactForm):
+    contact_forms_data.append(form.dict())
+    return {"success": True, "message": "Thank you for your message!"}
 
 @api_router.get("/health")
 async def health_check():
@@ -208,7 +333,7 @@ async def health_check():
 
 app.include_router(api_router)
 
-# === CLEAN SPA SERVING (this fixes the /api routes being overridden) ===
+# === CLEAN SPA SERVING ===
 if FRONTEND_BUILD_DIR.exists():
     # Single mount handles: static files, index.html at /, and fallback for React Router
     app.mount("/", StaticFiles(directory=str(FRONTEND_BUILD_DIR), html=True), name="frontend")
@@ -231,5 +356,6 @@ app.add_middleware(
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    logger.info(f"🚀 Starting server on port {port}")
+    logger.info(f"🚀 Starting server on http://0.0.0.0:{port}")
+    logger.info(f"📁 Frontend build dir: {FRONTEND_BUILD_DIR} (exists: {FRONTEND_BUILD_DIR.exists()})")
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
