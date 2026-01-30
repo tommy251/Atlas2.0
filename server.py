@@ -317,6 +317,30 @@ async def signup(user: UserSignup):
     users_data[user.username] = new_user
     return {"success": True, "message": "Signup successful"}
 
+@api_router.post("/checkout")
+async def checkout(order: Dict):
+    # Validate/order logic here (simulate payment)
+    order_id = f"ORD-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
+    # Optional account creation
+    if order.get("create_account"):
+        signup_data = order["create_account"]
+        # Reuse signup logic
+        if any(u["username"] == signup_data.get("email") for u in users_data.values()):  # Use email as username?
+            return {"success": False, "message": "Account exists"}
+        password_hash = pwd_context.hash(signup_data["password"])
+        users_data[signup_data["email"]] = {"username": signup_data["email"], "email": signup_data["email"], "password_hash": password_hash}
+        # Login auto (generate token)
+        token = jwt.encode({"sub": signup_data["email"], "exp": datetime.utcnow() + timedelta(days=30)}, os.getenv("SECRET_KEY", "secret"), algorithm="HS256")
+    
+    # Save order (in-memory for now)
+    orders_data.append({"id": order_id, "customer": order["customer"], "items": order["items"], "total": order["total"]})
+    
+    # Simulate receipt (log + future email/SMS)
+    logger.info(f"New order {order_id} from {order['customer']['email']} - Total ₦{order['total']}")
+    
+    return {"success": True, "order_id": order_id, "token": token if order.get("create_account") else None}
+
 @api_router.post("/contact")
 async def contact(form: ContactForm):
     contact_forms_data.append(form.dict())
