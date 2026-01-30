@@ -283,4 +283,3 @@ function App() {
 }
 
 export default App;
-export { useApp };  // Only one export here — no duplicate!
