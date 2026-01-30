@@ -19,11 +19,28 @@ const Wishlist = () => {
       } catch {
         setLoading(false);
       }
+ PI();
     };
     fetchWishlist();
   }, [userId]);
 
-  if (loading) return <div className="pt-24 text-center text-blue-400">Loading wishlist...</div>;
+  const removeFromWishlist = async (itemId) => {
+    try {
+      await axios.delete('/api/wishlist/remove', { data: { user_id: userId, item_id: itemId } });
+      updateWishlistCount();
+      setWishlistItems(prev => prev.filter(i => i.item_id !== itemId));
+    } catch {
+      alert('Failed to remove');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="pt-24 min-h-screen bg-gray-900 flex items-center justify-center">
+        <p className="text-2xl text-blue-400 animate-pulse">Loading wishlist...</p>
+      </div>
+    );
+  }
 
   if (wishlistItems.length === 0) {
     return (
@@ -52,7 +69,7 @@ const Wishlist = () => {
               <button onClick={() => addToCart(item.item_id, item.price)} className="flex-1 bg-blue-600 py-3 rounded-lg hover:bg-blue-700 font-semibold">
                 Add to Cart
               </button>
-              <button className="px-4 py-3 bg-red-600 rounded-lg hover:bg-red-700">
+              <button onClick={() => removeFromWishlist(item.item_id)} className="px-4 py-3 bg-red-600 rounded-lg hover:bg-red-700">
                 Remove
               </button>
             </div>
