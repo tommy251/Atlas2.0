@@ -96,6 +96,7 @@ cart_data = {}
 wishlist_data = {}
 users_data = {}
 contact_forms_data = []
+orders_data = []  # <-- Added this line to fix undefined variable
 
 # Robust CSV loader with per-row error handling + fallback products
 def load_products():
