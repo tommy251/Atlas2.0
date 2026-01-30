@@ -86,7 +86,6 @@ const Header = () => {
             )}
           </div>
 
-          {/* Mobile menu button */}
           <button className="md:hidden text-gray-300 hover:text-blue-400" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -94,13 +93,48 @@ const Header = () => {
           </button>
         </div>
 
-        {/* Mobile menu */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 space-y-4 bg-gray-800 rounded-lg p-4">
-            {/* Mobile search + links same as desktop but vertical */}
-            {/* Copy the desktop links here with onClick to close menu */}
-            {/* ... (keep your existing mobile menu code) */}
-            {/* Add the user/logout conditional here too for mobile */}
+            <form onSubmit={handleSearch} className="flex">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="flex-1 px-3 py-2 bg-gray-700 text-white rounded-l-lg focus:outline-none"
+              />
+              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-r-lg">
+                Search
+              </button>
+            </form>
+            <Link to="/" className="block text-gray-300 hover:text-blue-400" onClick={() => setIsMenuOpen(false)}>Home</Link>
+            <Link to="/shop" className="block text-gray-300 hover:text-blue-400" onClick={() => setIsMenuOpen(false)}>Shop</Link>
+            <Link to="/about" className="block text-gray-300 hover:text-blue-400" onClick={() => setIsMenuOpen(false)}>About</Link>
+            <Link to="/contact" className="block text-gray-300 hover:text-blue-400" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+            <Link to="/cart" className="block text-gray-300 hover:text-blue-400" onClick={() => setIsMenuOpen(false)}>
+              Cart ({cartCount})
+            </Link>
+            <Link to="/wishlist" className="block text-gray-300 hover:text-blue-400" onClick={() => setIsMenuOpen(false)}>
+              Wishlist ({wishlistCount})
+            </Link>
+            {user ? (
+              <div className="space-y-2">
+                <span className="block text-gray-300">Hi, {user}!</span>
+                <button 
+                  onClick={() => {
+                    logout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="block w-full px-4 py-2 bg-red-600 text-white rounded-lg text-center"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="block px-4 py-2 bg-blue-600 text-white rounded-lg text-center" onClick={() => setIsMenuOpen(false)}>
+                Login
+              </Link>
+            )}
           </div>
         )}
       </nav>
@@ -249,4 +283,4 @@ function App() {
 }
 
 export default App;
-export { useApp };
+export { useApp };  // Only one export here — no duplicate!
