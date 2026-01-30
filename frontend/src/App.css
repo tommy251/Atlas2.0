@@ -163,3 +163,17 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+/* Mobile padding fix */
+main {
+  padding-top: 5rem; /* For fixed header */
+}
+
+/* Text scaling */
+h1 { font-size: 2rem; }
+@media (min-width: 640px) { h1 { font-size: 2.5rem; } }
+@media (min-width: 1024px) { h1 { font-size: 3rem; } }
+
+/* Button touch targets */
+button, a {
+  min-height: 44px; /* iOS accessibility */
+}

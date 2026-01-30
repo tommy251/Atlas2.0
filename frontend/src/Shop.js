@@ -67,7 +67,7 @@ const Shop = () => {
   return (
     <div className="pt-24 min-h-screen bg-gray-900">
       <h1 className="text-5xl text-center py-10 font-bold text-blue-400">Shop All Products</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-8 pb-20 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-4 pb-20 max-w-7xl mx-auto">
         {products.map(product => (
           <div key={product.id} className="bg-gray-800 rounded-xl overflow-hidden shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:-translate-y-2">
             {/* Product Image Frame */}

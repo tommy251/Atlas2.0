@@ -43,7 +43,7 @@ const Wishlist = () => {
 
   if (wishlistItems.length === 0) {
     return (
-      <div className="pt-24 min-h-screen bg-gray-900 text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         <h1 className="text-4xl font-bold text-blue-400 mb-8">Wishlist</h1>
         <p className="text-2xl text-gray-300">Your wishlist is empty — save items from shop!</p>
         <Link to="/shop" className="mt-8 inline-block px-8 py-4 bg-blue-600 rounded-lg hover:bg-blue-700 transition text-xl font-bold">
@@ -54,7 +54,7 @@ const Wishlist = () => {
   }
 
   return (
-    <div className="pt-24 min-h-screen bg-gray-900 px-4 py-12">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
       <h1 className="text-4xl font-bold text-blue-400 text-center mb-8">Wishlist ({wishlistCount} items)</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
         {wishlistItems.map(item => (

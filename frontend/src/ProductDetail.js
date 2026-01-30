@@ -49,7 +49,7 @@ const ProductDetail = () => {
   return (
     <div className="pt-24 min-h-screen bg-gray-900 px-4 py-12">
       <div className="max-w-4xl mx-auto bg-gray-800 rounded-2xl overflow-hidden shadow-2xl p-8">
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Image Section */}
           <div className="relative bg-gray-700 h-96 flex items-center justify-center rounded-xl overflow-hidden">
             <div className="bg-gray-600 border-4 border-dashed border-gray-500 rounded-xl w-64 h-64 flex items-center justify-center">

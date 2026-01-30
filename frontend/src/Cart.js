@@ -67,7 +67,8 @@ const Cart = () => {
 
   if (loading) {
     return (
-      <div className="pt-24 min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-center"></div>
         <p className="text-2xl text-blue-400 animate-pulse">Loading cart...</p>
       </div>
     );
@@ -75,7 +76,8 @@ const Cart = () => {
 
   if (error || cartItems.length === 0) {
     return (
-      <div className="pt-24 min-h-screen bg-gray-900 text-center">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-center"></div>
         <h1 className="text-4xl font-bold text-blue-400 mb-8">Your Cart</h1>
         <p className="text-2xl text-gray-300">{error || 'Your cart is empty — add items from shop!'}</p>
         <Link to="/shop" className="mt-8 inline-block px-8 py-4 bg-blue-600 rounded-lg hover:bg-blue-700 transition text-xl font-bold">
