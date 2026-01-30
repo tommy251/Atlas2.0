@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Wishlist = () => {
   const { wishlistCount, updateWishlistCount, user, addToCart } = useApp();
-  const [wishlistItems, setWishlistItems] = useState([]);
+  const [wishlist, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const userId = user || 'anonymous';
@@ -19,7 +19,6 @@ const Wishlist = () => {
       } catch {
         setLoading(false);
       }
- PI();
     };
     fetchWishlist();
   }, [userId]);
