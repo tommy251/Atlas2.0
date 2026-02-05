@@ -19,7 +19,7 @@ const API_BASE = '/api';
 const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
 
-// ==================== HEADER (Compact Dropdown Menu) ====================
+// ==================== HEADER (SOLID, ALWAYS VISIBLE, MOBILE-FRIENDLY) ====================
 const Header = () => {
   const { cartCount, wishlistCount, user, logout, searchQuery, setSearchQuery } = useApp();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,25 +34,27 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-blue-500/20">
+    <header className="fixed top-0 left-0 right-0 z-[9999] bg-black border-b-2 border-blue-500 shadow-2xl">
       <nav className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-blue-400">Atlas2.0</Link>
+        <div className="flex items-center justify-between gap-4">
+          {/* Logo - always visible */}
+          <Link to="/" className="text-2xl md:text-3xl font-bold text-blue-400 whitespace-nowrap">
+            Atlas2.0
+          </Link>
 
-          {/* Search bar - compact on mobile */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md">
+          {/* Search bar - compact, rounded, no button */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-xs sm:max-w-md md:max-w-lg">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products..."
-              className="w-full px-5 py-3 bg-gray-800 border border-gray-600 rounded-2xl text-white text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-5 py-3 bg-gray-800 border border-gray-600 rounded-full text-white text-sm md:text-base focus:outline-none focus:border-blue-500 shadow-inner"
             />
           </form>
 
-          {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-x-6 text-sm">
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center gap-x-6 text-sm md:text-base">
             <Link to="/" className="text-gray-300 hover:text-blue-400">Home</Link>
             <Link to="/shop" className="text-gray-300 hover:text-blue-400">Shop</Link>
             <Link to="/about" className="text-gray-300 hover:text-blue-400">About</Link>
@@ -63,27 +65,27 @@ const Header = () => {
             {user ? (
               <div className="flex items-center gap-x-4">
                 <span className="text-gray-300">Hi, {user}</span>
-                <button onClick={logout} className="px-4 py-2 bg-red-600 rounded-lg text-white text-sm hover:bg-red-700">Logout</button>
+                <button onClick={logout} className="px-5 py-2 bg-red-600 rounded-lg text-white hover:bg-red-700">Logout</button>
               </div>
             ) : (
-              <Link to="/login" className="px-5 py-2 bg-blue-600 rounded-lg text-white text-sm hover:bg-blue-700">Login</Link>
+              <Link to="/login" className="px-6 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700">Login</Link>
             )}
           </div>
 
-          {/* Hamburger - always visible on mobile */}
+          {/* Hamburger Menu Button - always visible on mobile/tablet */}
           <button 
-            className="text-white p-2 lg:hidden"
+            className="lg:hidden text-white p-2 z-[10000]"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
 
-        {/* Compact Dropdown Menu */}
+        {/* Mobile Dropdown Menu - compact, below header */}
         {isMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 right-0 bg-gray-900 border-t border-gray-700 shadow-2xl py-6 px-4 z-50">
+          <div className="lg:hidden absolute top-full left-0 right-0 bg-gray-900 border-t-2 border-blue-500 shadow-2xl py-6 px-6 z-[9999]">
             <div className="flex flex-col gap-y-6 text-xl text-center">
               <Link to="/" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Home</Link>
               <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Shop</Link>
@@ -95,7 +97,7 @@ const Header = () => {
               {user ? (
                 <button 
                   onClick={() => { logout(); setIsMenuOpen(false); }}
-                  className="py-4 bg-red-600 text-white rounded-2xl text-xl mt-4"
+                  className="py-4 bg-red-600 text-white rounded-xl text-xl mt-4"
                 >
                   Logout
                 </button>
@@ -103,7 +105,7 @@ const Header = () => {
                 <Link 
                   to="/login" 
                   onClick={() => setIsMenuOpen(false)}
-                  className="py-4 bg-blue-600 text-white rounded-2xl text-xl mt-4"
+                  className="py-4 bg-blue-600 text-white rounded-xl text-xl mt-4"
                 >
                   Login
                 </Link>
@@ -116,7 +118,7 @@ const Header = () => {
   );
 };
 
-// ==================== Rest of AppProvider + App stays the same ====================
+// ==================== APP PROVIDER (unchanged) ====================
 const AppProvider = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
