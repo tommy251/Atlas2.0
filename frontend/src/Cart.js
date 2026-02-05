@@ -122,9 +122,9 @@ const Cart = () => {
         })}
         <div className="text-right mt-8">
           <p className="text-2xl font-bold text-blue-400">Total: ₦{total.toLocaleString()}</p>
-          <Link to="/checkout" className="mt-4 inline-block px-8 py-4 bg-blue-600 rounded-lg hover:bg-blue-700 transition text-xl font-bold">
-            Proceed to Checkout →
-          </Link>
+          <Link to="/checkout" className="mt-4 inline-block px-8 py-4 bg-blue-600 rounded-lg hover:bg-blue-700 text-xl font-bold">
+  Proceed to Checkout →
+</Link>
         </div>
       </div>
     </div>
