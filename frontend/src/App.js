@@ -19,7 +19,7 @@ const API_BASE = '/api';
 const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
 
-// ==================== HEADER (Clean Mobile) ====================
+// ==================== HEADER (Compact Dropdown Menu) ====================
 const Header = () => {
   const { cartCount, wishlistCount, user, logout, searchQuery, setSearchQuery } = useApp();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,7 +40,7 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="text-2xl font-bold text-blue-400">Atlas2.0</Link>
 
-          {/* Search input ONLY (no button) */}
+          {/* Search bar - compact on mobile */}
           <form onSubmit={handleSearch} className="flex-1 max-w-md">
             <input
               type="text"
@@ -75,35 +75,36 @@ const Header = () => {
             className="text-white p-2 lg:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.8">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
 
-        {/* Mobile Full-screen Menu */}
+        {/* Compact Dropdown Menu */}
         {isMenuOpen && (
-          <div className="fixed inset-0 bg-black z-[60] lg:hidden pt-20 px-6">
-            <div className="flex flex-col gap-y-8 text-2xl text-center py-10">
-              <Link to="/" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Home</Link>
-              <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Shop</Link>
-              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">About</Link>
-              <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Contact</Link>
-              <Link to="/cart" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Cart ({cartCount})</Link>
-              <Link to="/wishlist" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Wishlist ({wishlistCount})</Link>
+          <div className="lg:hidden absolute top-full left-0 right-0 bg-gray-900 border-t border-gray-700 shadow-2xl py-6 px-4 z-50">
+            <div className="flex flex-col gap-y-6 text-xl text-center">
+              <Link to="/" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Home</Link>
+              <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Shop</Link>
+              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">About</Link>
+              <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Contact</Link>
+              <Link to="/cart" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Cart ({cartCount})</Link>
+              <Link to="/wishlist" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Wishlist ({wishlistCount})</Link>
 
               {user ? (
-                <>
-                  <div className="text-gray-300 py-4">Hi, {user}</div>
-                  <button 
-                    onClick={() => { logout(); setIsMenuOpen(false); }} 
-                    className="py-5 bg-red-600 text-white rounded-xl text-xl"
-                  >
-                    Logout
-                  </button>
-                </>
+                <button 
+                  onClick={() => { logout(); setIsMenuOpen(false); }}
+                  className="py-4 bg-red-600 text-white rounded-2xl text-xl mt-4"
+                >
+                  Logout
+                </button>
               ) : (
-                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="py-5 bg-blue-600 text-white rounded-xl text-xl">
+                <Link 
+                  to="/login" 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-4 bg-blue-600 text-white rounded-2xl text-xl mt-4"
+                >
                   Login
                 </Link>
               )}
@@ -115,7 +116,7 @@ const Header = () => {
   );
 };
 
-// ==================== APP PROVIDER (unchanged) ====================
+// ==================== Rest of AppProvider + App stays the same ====================
 const AppProvider = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
