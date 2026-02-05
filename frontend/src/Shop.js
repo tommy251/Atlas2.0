@@ -8,6 +8,7 @@ const Shop = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { addToCart, addToWishlist } = useApp();
+  const [addingId, setAddingId] = useState(null);  // For loading feedback
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -17,85 +18,60 @@ const Shop = () => {
         setProducts(data);
         setLoading(false);
       } catch (err) {
-        console.error('Failed to load products:', err);
-        setError('Failed to load products. Please try again later.');
-        setProducts([]);
+        setError('Failed to load products');
         setLoading(false);
       }
     };
-
     fetchProducts();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="pt-24 min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-5xl font-bold text-blue-400 mb-6">Shop All Products</h1>
-          <p className="text-2xl text-gray-300 animate-pulse">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleAddToCart = async (id, price) => {
+    setAddingId(id);
+    await addToCart(id, price);
+    setAddingId(null);
+  };
 
-  if (error) {
-    return (
-      <div className="pt-24 min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-5xl font-bold text-blue-400 mb-6">Shop All Products</h1>
-          <p className="text-2xl text-red-500">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  const handleAddToWishlist = async (id) => {
+    setAddingId(`w-${id}`);
+    await addToWishlist(id);
+    setAddingId(null);
+  };
 
-  if (products.length === 0) {
-    return (
-      <div className="pt-24 min-h-screen bg-gray-900 text-center">
-        <h1 className="text-5xl font-bold text-blue-400 py-10">Shop All Products</h1>
-        <p className="text-xl text-gray-300">No products available right now.</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="pt-24 text-center text-blue-400 animate-pulse">Loading...</div>;
+  if (error) return <div className="pt-24 text-center text-red-500">{error}</div>;
+  if (products.length === 0) return <div className="pt-24 text-center text-gray-300">No products</div>;
 
   return (
     <div className="pt-24 min-h-screen bg-gray-900">
       <h1 className="text-5xl text-center py-10 font-bold text-blue-400">Shop All Products</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4 pb-20 max-w-7xl mx-auto">
         {products.map(product => (
-          <div key={product.id} className="bg-gray-800 rounded-xl overflow-hidden shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:-translate-y-2">
-            <div className="relative bg-gray-700 h-64 flex items-center justify-center overflow-hidden">
-              <div className="bg-gray-600 border-4 border-dashed border-gray-500 rounded-xl w-48 h-48 flex items-center justify-center">
-                <p className="text-gray-400 text-center">Product Image<br />(Add real later)</p>
-              </div>
-              <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                ₦{product.price?.toLocaleString() || '0'}
-              </div>
+          <div key={product.id} className="bg-gray-800 rounded-xl overflow-hidden shadow-2xl hover:shadow-blue-500/50 transition-all">
+            <div className="bg-gray-700 h-64 flex items-center justify-center">
+              <p className="text-gray-400">Image (Add real)</p>
             </div>
-
             <div className="p-6">
-              <h3 className="text-2xl font-bold text-blue-400 truncate">{product.name || 'Unnamed Product'}</h3>
-              <p className="text-gray-400 text-sm mt-2 line-clamp-2">{product.description || 'No description available'}</p>
+              <h3 className="text-2xl font-bold text-blue-400 truncate">{product.name}</h3>
+              <p className="text-gray-400 text-sm mt-2 line-clamp-2">{product.description}</p>
               
               <div className="mt-6 flex gap-3">
                 <button
-                  onClick={() => addToCart(product.id, product.price)}
-                  className="flex-1 bg-blue-600 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+                  onClick={() => handleAddToCart(product.id, product.price)}
+                  disabled={addingId === product.id}
+                  className="flex-1 bg-blue-600 py-3 rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-70"
                 >
-                  Add to Cart
+                  {addingId === product.id ? 'Adding...' : 'Add to Cart'}
                 </button>
                 <button
-                  onClick={() => addToWishlist(product.id)}
-                  className="px-4 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition text-xl"
+                  onClick={() => handleAddToWishlist(product.id)}
+                  disabled={addingId === `w-${product.id}`}
+                  className="px-4 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 text-xl disabled:opacity-70"
                 >
-                  ❤️
+                  {addingId === `w-${product.id}` ? '...' : '❤️'}
                 </button>
               </div>
 
-              <Link 
-                to={`/product/${product.id}`} 
-                className="block mt-4 text-center text-blue-400 hover:text-blue-300 underline transition"
-              >
+              <Link to={`/product/${product.id}`} className="block mt-4 text-center text-blue-400 hover:underline">
                 View Details →
               </Link>
             </div>
