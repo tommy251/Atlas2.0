@@ -13,7 +13,6 @@ const Shop = () => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get('/api/products');
-        // Force array even if backend returns object/null/undefined
         const data = Array.isArray(res.data) ? res.data : [];
         setProducts(data);
         setLoading(false);
@@ -28,7 +27,6 @@ const Shop = () => {
     fetchProducts();
   }, []);
 
-  // Loading state
   if (loading) {
     return (
       <div className="pt-24 min-h-screen bg-gray-900 flex items-center justify-center">
@@ -40,20 +38,17 @@ const Shop = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="pt-24 min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-5xl font-bold text-blue-400 mb-6">Shop All Products</h1>
           <p className="text-2xl text-red-500">{error}</p>
-          <p className="text-gray-400 mt-4">Check console for details or try refreshing.</p>
         </div>
       </div>
     );
   }
 
-  // Empty state
   if (products.length === 0) {
     return (
       <div className="pt-24 min-h-screen bg-gray-900 text-center">
@@ -63,14 +58,12 @@ const Shop = () => {
     );
   }
 
-  // Main shop grid
   return (
     <div className="pt-24 min-h-screen bg-gray-900">
       <h1 className="text-5xl text-center py-10 font-bold text-blue-400">Shop All Products</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-4 pb-20 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4 pb-20 max-w-7xl mx-auto">
         {products.map(product => (
           <div key={product.id} className="bg-gray-800 rounded-xl overflow-hidden shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:-translate-y-2">
-            {/* Product Image Frame */}
             <div className="relative bg-gray-700 h-64 flex items-center justify-center overflow-hidden">
               <div className="bg-gray-600 border-4 border-dashed border-gray-500 rounded-xl w-48 h-48 flex items-center justify-center">
                 <p className="text-gray-400 text-center">Product Image<br />(Add real later)</p>
@@ -80,7 +73,6 @@ const Shop = () => {
               </div>
             </div>
 
-            {/* Product Info Frame */}
             <div className="p-6">
               <h3 className="text-2xl font-bold text-blue-400 truncate">{product.name || 'Unnamed Product'}</h3>
               <p className="text-gray-400 text-sm mt-2 line-clamp-2">{product.description || 'No description available'}</p>
