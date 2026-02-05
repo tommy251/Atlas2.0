@@ -19,7 +19,7 @@ const API_BASE = '/api';
 const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
 
-// ==================== HEADER ====================
+// ==================== HEADER (Mobile-first) ====================
 const Header = () => {
   const { cartCount, wishlistCount, user, logout, searchQuery, setSearchQuery } = useApp();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,19 +39,23 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-blue-400">Atlas2.0</Link>
 
-          <form onSubmit={handleSearch} className="flex-1 mx-4 max-w-md">
+          {/* Search bar - smaller on mobile */}
+          <form onSubmit={handleSearch} className="flex-1 mx-3 max-w-xs sm:max-w-md">
             <div className="flex">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search products..."
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-600 rounded-l-lg text-white text-sm focus:outline-none"
+                className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-600 rounded-l-lg text-white text-sm focus:outline-none focus:border-blue-500"
               />
-              <button type="submit" className="px-5 bg-blue-600 text-white rounded-r-lg text-sm">Search</button>
+              <button type="submit" className="px-5 bg-blue-600 text-white rounded-r-lg text-sm font-medium">
+                Search
+              </button>
             </div>
           </form>
 
+          {/* Desktop nav */}
           <div className="hidden lg:flex items-center gap-x-6 text-sm">
             <Link to="/" className="text-gray-300 hover:text-blue-400">Home</Link>
             <Link to="/shop" className="text-gray-300 hover:text-blue-400">Shop</Link>
@@ -70,31 +74,39 @@ const Header = () => {
             )}
           </div>
 
-          <button className="lg:hidden text-gray-300" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {/* Hamburger - visible on mobile & tablet */}
+          <button 
+            className="lg:hidden text-gray-300 p-2"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
 
-        {/* Mobile Full-screen Menu */}
+        {/* Mobile Menu - Full screen overlay */}
         {isMenuOpen && (
-          <div className="fixed inset-0 bg-black z-50 lg:hidden pt-20 px-6">
-            <div className="flex flex-col gap-y-8 text-2xl text-center">
-              <Link to="/" onClick={() => setIsMenuOpen(false)} className="text-gray-300">Home</Link>
-              <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-gray-300">Shop</Link>
-              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="text-gray-300">About</Link>
-              <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="text-gray-300">Contact</Link>
-              <Link to="/cart" onClick={() => setIsMenuOpen(false)} className="text-gray-300">Cart ({cartCount})</Link>
-              <Link to="/wishlist" onClick={() => setIsMenuOpen(false)} className="text-gray-300">Wishlist ({wishlistCount})</Link>
+          <div className="fixed inset-0 bg-black z-50 lg:hidden pt-20 px-6 overflow-y-auto">
+            <div className="flex flex-col gap-y-8 text-2xl text-center py-10">
+              <Link to="/" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Home</Link>
+              <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Shop</Link>
+              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">About</Link>
+              <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Contact</Link>
+              <Link to="/cart" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Cart ({cartCount})</Link>
+              <Link to="/wishlist" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Wishlist ({wishlistCount})</Link>
 
               {user ? (
                 <>
-                  <div className="text-gray-300">Hi, {user}</div>
-                  <button onClick={() => { logout(); setIsMenuOpen(false); }} className="py-4 bg-red-600 text-white rounded-lg">Logout</button>
+                  <div className="text-gray-300 py-4">Hi, {user}</div>
+                  <button onClick={() => { logout(); setIsMenuOpen(false); }} className="py-5 bg-red-600 text-white rounded-xl text-xl">
+                    Logout
+                  </button>
                 </>
               ) : (
-                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="py-4 bg-blue-600 text-white rounded-lg">Login</Link>
+                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="py-5 bg-blue-600 text-white rounded-xl text-xl">
+                  Login
+                </Link>
               )}
             </div>
           </div>
