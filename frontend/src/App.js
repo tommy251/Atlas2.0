@@ -19,7 +19,7 @@ const API_BASE = '/api';
 const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
 
-// ==================== HEADER (Mobile-first) ====================
+// ==================== HEADER (Fixed for Mobile) ====================
 const Header = () => {
   const { cartCount, wishlistCount, user, logout, searchQuery, setSearchQuery } = useApp();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,11 +36,14 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-blue-500/20">
       <nav className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-blue-400">Atlas2.0</Link>
+        <div className="flex items-center justify-between gap-3">
+          {/* Logo */}
+          <Link to="/" className="text-2xl font-bold text-blue-400 whitespace-nowrap">
+            Atlas2.0
+          </Link>
 
-          {/* Search bar - smaller on mobile */}
-          <form onSubmit={handleSearch} className="flex-1 mx-3 max-w-xs sm:max-w-md">
+          {/* Search bar - aggressively shrink on mobile */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-xs sm:max-w-md">
             <div className="flex">
               <input
                 type="text"
@@ -49,7 +52,7 @@ const Header = () => {
                 placeholder="Search products..."
                 className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-600 rounded-l-lg text-white text-sm focus:outline-none focus:border-blue-500"
               />
-              <button type="submit" className="px-5 bg-blue-600 text-white rounded-r-lg text-sm font-medium">
+              <button type="submit" className="px-5 bg-blue-600 text-white rounded-r-lg text-sm font-medium whitespace-nowrap">
                 Search
               </button>
             </div>
@@ -74,9 +77,9 @@ const Header = () => {
             )}
           </div>
 
-          {/* Hamburger - visible on mobile & tablet */}
+          {/* Hamburger - always visible on mobile & tablet */}
           <button 
-            className="lg:hidden text-gray-300 p-2"
+            className="text-gray-300 p-2 lg:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,9 +88,9 @@ const Header = () => {
           </button>
         </div>
 
-        {/* Mobile Menu - Full screen overlay */}
+        {/* Mobile Full-screen Menu */}
         {isMenuOpen && (
-          <div className="fixed inset-0 bg-black z-50 lg:hidden pt-20 px-6 overflow-y-auto">
+          <div className="fixed inset-0 bg-black z-[60] lg:hidden pt-20 px-6 overflow-y-auto">
             <div className="flex flex-col gap-y-8 text-2xl text-center py-10">
               <Link to="/" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Home</Link>
               <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Shop</Link>
@@ -99,7 +102,10 @@ const Header = () => {
               {user ? (
                 <>
                   <div className="text-gray-300 py-4">Hi, {user}</div>
-                  <button onClick={() => { logout(); setIsMenuOpen(false); }} className="py-5 bg-red-600 text-white rounded-xl text-xl">
+                  <button 
+                    onClick={() => { logout(); setIsMenuOpen(false); }} 
+                    className="py-5 bg-red-600 text-white rounded-xl text-xl"
+                  >
                     Logout
                   </button>
                 </>
@@ -116,7 +122,7 @@ const Header = () => {
   );
 };
 
-// ==================== APP PROVIDER ====================
+// Rest of your AppProvider + App function stays exactly the same
 const AppProvider = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
