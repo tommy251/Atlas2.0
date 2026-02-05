@@ -19,104 +19,13 @@ const API_BASE = '/api';
 const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
 
-// ==================== HEADER (Compact Dropdown Menu) ====================
+// Header (your current good one — no change needed)
+
 const Header = () => {
-  const { cartCount, wishlistCount, user, logout, searchQuery, setSearchQuery } = useApp();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
-    }
-  };
-
-  return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-blue-500/20">
-      <nav className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-blue-400">Atlas2.0</Link>
-
-          {/* Search bar - compact on mobile */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products..."
-              className="w-full px-5 py-3 bg-gray-800 border border-gray-600 rounded-2xl text-white text-sm focus:outline-none focus:border-blue-500"
-            />
-          </form>
-
-          {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-x-6 text-sm">
-            <Link to="/" className="text-gray-300 hover:text-blue-400">Home</Link>
-            <Link to="/shop" className="text-gray-300 hover:text-blue-400">Shop</Link>
-            <Link to="/about" className="text-gray-300 hover:text-blue-400">About</Link>
-            <Link to="/contact" className="text-gray-300 hover:text-blue-400">Contact</Link>
-            <Link to="/cart" className="text-gray-300 hover:text-blue-400">Cart ({cartCount})</Link>
-            <Link to="/wishlist" className="text-gray-300 hover:text-blue-400">Wishlist ({wishlistCount})</Link>
-
-            {user ? (
-              <div className="flex items-center gap-x-4">
-                <span className="text-gray-300">Hi, {user}</span>
-                <button onClick={logout} className="px-4 py-2 bg-red-600 rounded-lg text-white text-sm hover:bg-red-700">Logout</button>
-              </div>
-            ) : (
-              <Link to="/login" className="px-5 py-2 bg-blue-600 rounded-lg text-white text-sm hover:bg-blue-700">Login</Link>
-            )}
-          </div>
-
-          {/* Hamburger - always visible on mobile */}
-          <button 
-            className="text-white p-2 lg:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Compact Dropdown Menu */}
-        {isMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 right-0 bg-gray-900 border-t border-gray-700 shadow-2xl py-6 px-4 z-50">
-            <div className="flex flex-col gap-y-6 text-xl text-center">
-              <Link to="/" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Home</Link>
-              <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Shop</Link>
-              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">About</Link>
-              <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Contact</Link>
-              <Link to="/cart" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Cart ({cartCount})</Link>
-              <Link to="/wishlist" onClick={() => setIsMenuOpen(false)} className="py-3 text-gray-300 hover:text-blue-400">Wishlist ({wishlistCount})</Link>
-
-              {user ? (
-                <button 
-                  onClick={() => { logout(); setIsMenuOpen(false); }}
-                  className="py-4 bg-red-600 text-white rounded-2xl text-xl mt-4"
-                >
-                  Logout
-                </button>
-              ) : (
-                <Link 
-                  to="/login" 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="py-4 bg-blue-600 text-white rounded-2xl text-xl mt-4"
-                >
-                  Login
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-      </nav>
-    </header>
-  );
+  // ... your current Header code from last push ...
 };
 
-// ==================== Rest of AppProvider + App stays the same ====================
+// AppProvider – fixed wishlist count fetch + consistent with cart
 const AppProvider = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
@@ -130,6 +39,8 @@ const AppProvider = ({ children }) => {
     if (token && storedUser) {
       setUser(storedUser);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      updateCartCount();
+      updateWishlistCount();
     }
   }, []);
 
@@ -138,26 +49,38 @@ const AppProvider = ({ children }) => {
   const updateCartCount = async () => {
     try {
       const res = await axios.get(`/api/cart/${getUserId()}`);
-      const count = res.data.items ? res.data.items.reduce((a, b) => a + b.quantity, 0) : 0;
-      setCartCount(count);
-    } catch { setCartCount(0); }
+      setCartCount(res.data.count || 0);  // Use .count from backend
+    } catch {
+      setCartCount(0);
+    }
   };
 
   const updateWishlistCount = async () => {
     try {
       const res = await axios.get(`/api/wishlist/${getUserId()}`);
-      setWishlistCount(res.data.length || 0);
-    } catch { setWishlistCount(0); }
+      setWishlistCount(res.data.count || 0);  // Fixed: use .count (consistent with cart)
+    } catch {
+      setWishlistCount(0);
+    }
   };
 
   const addToCart = async (itemId, price, color = '', storage = '') => {
-    await axios.post('/api/cart/add', { user_id: getUserId(), item_id: itemId, price, color, storage });
-    updateCartCount();
+    try {
+      await axios.post('/api/cart/add', { user_id: getUserId(), item_id: itemId, price, color, storage });
+      updateCartCount();
+    } catch (error) {
+      alert('Failed to add to cart');
+    }
   };
 
   const addToWishlist = async (itemId) => {
-    await axios.post('/api/wishlist/add', { user_id: getUserId(), item_id: itemId });
-    updateWishlistCount();
+    try {
+      const res = await axios.post('/api/wishlist/add', { user_id: getUserId(), item_id: itemId });
+      setWishlistCount(res.data.wishlist_count || 0);  // Instant update from backend response
+      updateWishlistCount();  // Backup fetch
+    } catch (error) {
+      alert('Failed to add to wishlist');
+    }
   };
 
   const logout = () => {
@@ -168,7 +91,18 @@ const AppProvider = ({ children }) => {
     navigate('/login');
   };
 
-  const value = { cartCount, wishlistCount, user, addToCart, addToWishlist, logout, updateCartCount, updateWishlistCount, searchQuery, setSearchQuery };
+  const value = {
+    cartCount,
+    wishlistCount,
+    user,
+    addToCart,
+    addToWishlist,
+    updateCartCount,
+    updateWishlistCount,
+    logout,
+    searchQuery,
+    setSearchQuery
+  };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

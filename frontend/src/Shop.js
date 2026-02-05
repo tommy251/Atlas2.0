@@ -8,7 +8,7 @@ const Shop = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { addToCart, addToWishlist } = useApp();
-  const [addingId, setAddingId] = useState(null);  // For loading feedback
+  const [actionLoading, setActionLoading] = useState({});  // {productId: 'cart' or 'wishlist'}
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -26,20 +26,20 @@ const Shop = () => {
   }, []);
 
   const handleAddToCart = async (id, price) => {
-    setAddingId(id);
+    setActionLoading(prev => ({ ...prev, [id]: 'cart' }));
     await addToCart(id, price);
-    setAddingId(null);
+    setActionLoading(prev => ({ ...prev, [id]: null }));
   };
 
   const handleAddToWishlist = async (id) => {
-    setAddingId(`w-${id}`);
+    setActionLoading(prev => ({ ...prev, [id]: 'wishlist' }));
     await addToWishlist(id);
-    setAddingId(null);
+    setActionLoading(prev => ({ ...prev, [id]: null }));
   };
 
-  if (loading) return <div className="pt-24 text-center text-blue-400 animate-pulse">Loading...</div>;
-  if (error) return <div className="pt-24 text-center text-red-500">{error}</div>;
-  if (products.length === 0) return <div className="pt-24 text-center text-gray-300">No products</div>;
+  if (loading) return <div className="pt-24 text-center text-blue-400 animate-pulse text-2xl">Loading products...</div>;
+  if (error) return <div className="pt-24 text-center text-red-500 text-2xl">{error}</div>;
+  if (products.length === 0) return <div className="pt-24 text-center text-gray-300 text-2xl">No products available</div>;
 
   return (
     <div className="pt-24 min-h-screen bg-gray-900">
@@ -57,17 +57,17 @@ const Shop = () => {
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={() => handleAddToCart(product.id, product.price)}
-                  disabled={addingId === product.id}
-                  className="flex-1 bg-blue-600 py-3 rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-70"
+                  disabled={actionLoading[product.id] === 'cart'}
+                  className="flex-1 bg-blue-600 py-3 rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {addingId === product.id ? 'Adding...' : 'Add to Cart'}
+                  {actionLoading[product.id] === 'cart' ? 'Adding...' : 'Add to Cart'}
                 </button>
                 <button
                   onClick={() => handleAddToWishlist(product.id)}
-                  disabled={addingId === `w-${product.id}`}
-                  className="px-4 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 text-xl disabled:opacity-70"
+                  disabled={actionLoading[product.id] === 'wishlist'}
+                  className="px-4 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 text-xl disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {addingId === `w-${product.id}` ? '...' : '❤️'}
+                  {actionLoading[product.id] === 'wishlist' ? '...' : '❤️'}
                 </button>
               </div>
 

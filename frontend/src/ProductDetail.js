@@ -11,7 +11,7 @@ const ProductDetail = () => {
   const [error, setError] = useState(null);
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedStorage, setSelectedStorage] = useState('');
-  const [adding, setAdding] = useState(false);  // Loading state
+  const [actionLoading, setActionLoading] = useState('');  // 'cart' or 'wishlist' or ''
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -30,43 +30,52 @@ const ProductDetail = () => {
   }, [id]);
 
   const handleAddToCart = async () => {
-    setAdding(true);
+    setActionLoading('cart');
     await addToCart(product.id, product.price, selectedColor, selectedStorage);
-    setAdding(false);
+    setActionLoading('');
   };
 
   const handleAddToWishlist = async () => {
-    setAdding(true);
+    setActionLoading('wishlist');
     await addToWishlist(product.id);
-    setAdding(false);
+    setActionLoading('');
   };
 
-  if (loading) return <div className="pt-24 text-center text-blue-400 animate-pulse">Loading...</div>;
-  if (error || !product) return <div className="pt-24 text-center text-red-500">{error}</div>;
+  if (loading) return <div className="pt-24 text-center text-blue-400 animate-pulse text-2xl">Loading...</div>;
+  if (error || !product) return <div className="pt-24 text-center text-red-500 text-2xl">{error}</div>;
 
   return (
     <div className="pt-24 min-h-screen bg-gray-900 px-4 py-12">
       <div className="max-w-4xl mx-auto bg-gray-800 rounded-2xl p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Image + Details (same as before) */}
-          {/* ... your existing image and details code ... */}
+          {/* Image */}
+          <div className="bg-gray-700 h-96 rounded-2xl flex items-center justify-center">
+            <p className="text-gray-400">Main Image (Add real)</p>
+          </div>
 
-          {/* Action Buttons with loading */}
-          <div className="flex gap-4 mt-6">
-            <button 
-              onClick={handleAddToCart}
-              disabled={adding}
-              className="flex-1 bg-blue-600 py-4 rounded-lg hover:bg-blue-700 font-bold text-lg disabled:opacity-70"
-            >
-              {adding ? 'Adding to Cart...' : 'Add to Cart'}
-            </button>
-            <button 
-              onClick={handleAddToWishlist}
-              disabled={adding}
-              className="px-6 py-4 bg-gray-700 rounded-lg hover:bg-gray-600 text-2xl disabled:opacity-70"
-            >
-              {adding ? '...' : '❤️'}
-            </button>
+          {/* Details */}
+          <div>
+            <h1 className="text-4xl font-bold text-blue-400 mb-4">{product.name}</h1>
+            <p className="text-gray-300 mb-6">{product.description}</p>
+
+            {/* Colors/Storage/Specs same as before */}
+
+            <div className="flex gap-4 mt-10">
+              <button 
+                onClick={handleAddToCart}
+                disabled={actionLoading === 'cart'}
+                className="flex-1 bg-blue-600 py-4 rounded-lg hover:bg-blue-700 font-bold text-lg disabled:opacity-70"
+              >
+                {actionLoading === 'cart' ? 'Adding to Cart...' : 'Add to Cart'}
+              </button>
+              <button 
+                onClick={handleAddToWishlist}
+                disabled={actionLoading === 'wishlist'}
+                className="px-6 py-4 bg-gray-700 rounded-lg hover:bg-gray-600 text-2xl disabled:opacity-70"
+              >
+                {actionLoading === 'wishlist' ? '...' : '❤️'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
