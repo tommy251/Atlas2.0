@@ -19,7 +19,7 @@ const API_BASE = '/api';
 const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
 
-// ==================== HEADER (Fixed for Mobile) ====================
+// ==================== HEADER (Clean Mobile) ====================
 const Header = () => {
   const { cartCount, wishlistCount, user, logout, searchQuery, setSearchQuery } = useApp();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,24 +38,17 @@ const Header = () => {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-3">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-blue-400 whitespace-nowrap">
-            Atlas2.0
-          </Link>
+          <Link to="/" className="text-2xl font-bold text-blue-400">Atlas2.0</Link>
 
-          {/* Search bar - aggressively shrink on mobile */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-xs sm:max-w-md">
-            <div className="flex">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products..."
-                className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-600 rounded-l-lg text-white text-sm focus:outline-none focus:border-blue-500"
-              />
-              <button type="submit" className="px-5 bg-blue-600 text-white rounded-r-lg text-sm font-medium whitespace-nowrap">
-                Search
-              </button>
-            </div>
+          {/* Search input ONLY (no button) */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-md">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              className="w-full px-5 py-3 bg-gray-800 border border-gray-600 rounded-2xl text-white text-sm focus:outline-none focus:border-blue-500"
+            />
           </form>
 
           {/* Desktop nav */}
@@ -77,20 +70,20 @@ const Header = () => {
             )}
           </div>
 
-          {/* Hamburger - always visible on mobile & tablet */}
+          {/* Hamburger - always visible on mobile */}
           <button 
-            className="text-gray-300 p-2 lg:hidden"
+            className="text-white p-2 lg:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
 
         {/* Mobile Full-screen Menu */}
         {isMenuOpen && (
-          <div className="fixed inset-0 bg-black z-[60] lg:hidden pt-20 px-6 overflow-y-auto">
+          <div className="fixed inset-0 bg-black z-[60] lg:hidden pt-20 px-6">
             <div className="flex flex-col gap-y-8 text-2xl text-center py-10">
               <Link to="/" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Home</Link>
               <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-gray-300 py-4">Shop</Link>
@@ -122,7 +115,7 @@ const Header = () => {
   );
 };
 
-// Rest of your AppProvider + App function stays exactly the same
+// ==================== APP PROVIDER (unchanged) ====================
 const AppProvider = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
